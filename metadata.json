@@ -1,0 +1,6 @@
+{
+  "name": "Beaquos RSVP",
+  "description": "Plataforma de gerenciamento de RSVP e convites para eventos do Beaquos Estúdio Criativo.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

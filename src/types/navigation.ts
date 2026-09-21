@@ -1,0 +1,34 @@
+export type NavSection =
+  | 'overview'
+  | 'events'
+  | 'form-builder'
+  | 'guests'
+  | 'managers'
+  | 'analytics'
+  | 'settings';
+
+export interface NavItem {
+  id: NavSection;
+  label: string;
+  iconName: 'LayoutDashboard' | 'Calendar' | 'FileText' | 'Users' | 'UserCheck' | 'BarChart3' | 'Settings';
+  badge?: string;
+  description?: string;
+}
+
+export interface ActiveEventSummary {
+  id: string;
+  name: string;
+  type: string;
+  date: string;
+  time: string;
+  location: string;
+  address: string;
+  rsvpDeadline: string;
+  daysRemaining: number;
+  status: 'active' | 'closed' | 'draft';
+  totalGuests: number;
+  confirmed: number;
+  pending: number;
+  declined: number;
+  companionsCount: number;
+}
