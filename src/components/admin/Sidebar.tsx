@@ -7,169 +7,168 @@ import {
   UserCheck,
   BarChart3,
   Settings,
-  X,
-  ExternalLink,
-  Sparkles,
   ChevronRight,
-  ShieldCheck,
-  Copy,
-  Check,
+  ExternalLink,
+  X,
   ArrowLeft,
-  LayoutGrid,
+  Sparkles,
 } from 'lucide-react';
-import { NavSection, NavItem } from '../../types/navigation';
+import { HubSection, NavSection, NavItem } from '../../types/navigation';
 import { formatDateBR } from '../../utils/dateUtils';
+import { RafluoLogo } from '../common/RafluoLogo';
+import { SidebarToggle } from '../common/SidebarToggle';
 
 interface SidebarProps {
-  currentSection: NavSection;
-  onSelectSection: (section: NavSection) => void;
-  onCloseMobile?: () => void;
+  // Hub section vs Event section
+  isMasterView?: boolean;
+  currentHubSection?: HubSection;
+  onSelectHubSection?: (section: HubSection) => void;
+
+  // Event specific
+  currentSection?: NavSection;
+  onSelectSection?: (section: NavSection) => void;
   eventName?: string;
   rsvpDeadline?: string;
-  onOpenPreview?: () => void;
-  isMasterView?: boolean;
   onExitToMaster?: () => void;
-  onCopyEventLink?: () => void;
-  hasCopiedLink?: boolean;
+  onOpenPreview?: () => void;
+  onCloseMobile?: () => void;
+
+  // Collapse / Expand feature
+  isCollapsed?: boolean;
+  onToggleCollapse?: () => void;
 }
 
+// Exactly 4 primary areas for the Hub:
+// Dashboard | Eventos | Relatórios | Usuários
+const HUB_NAV_ITEMS: { id: HubSection; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
+  {
+    id: 'dashboard',
+    label: 'Dashboard',
+    icon: LayoutDashboard,
+  },
+  {
+    id: 'events',
+    label: 'Eventos',
+    icon: Calendar,
+  },
+  {
+    id: 'reports',
+    label: 'Relatórios',
+    icon: BarChart3,
+  },
+  {
+    id: 'users',
+    label: 'Usuários',
+    icon: Users,
+  },
+];
+
+// Operational tabs when inside a specific event
 const EVENT_NAV_ITEMS: NavItem[] = [
   {
     id: 'overview',
-    label: 'Visão Geral',
+    label: 'Dashboard',
     iconName: 'LayoutDashboard',
-    description: 'Resumo e indicadores do evento',
   },
   {
     id: 'events',
     label: 'Dados do Evento',
     iconName: 'Calendar',
-    badge: 'Ativo',
-    description: 'Local, data, horário e prazo',
-  },
-  {
-    id: 'form-builder',
-    label: 'Construtor de Formulário',
-    iconName: 'FileText',
-    badge: 'Perguntas',
-    description: 'Perguntas e regras do RSVP',
   },
   {
     id: 'guests',
-    label: 'Lista de Convidados',
+    label: 'Convidados',
     iconName: 'Users',
-    description: 'Importar CSV, links e WhatsApp',
+  },
+  {
+    id: 'form-builder',
+    label: 'Formulários',
+    iconName: 'FileText',
   },
   {
     id: 'managers',
     label: 'Responsáveis',
     iconName: 'UserCheck',
-    badge: 'Acessos',
-    description: 'Controle de acesso por e-mail e data',
   },
   {
     id: 'analytics',
-    label: 'Relatórios & Exportação',
+    label: 'Relatórios',
     iconName: 'BarChart3',
-    description: 'Exportar CSV e confirmações',
   },
   {
     id: 'settings',
     label: 'Configurações',
     iconName: 'Settings',
-    description: 'Identidade e parâmetros',
   },
 ];
 
 export const Sidebar: React.FC<SidebarProps> = ({
-  currentSection,
+  isMasterView = true,
+  currentHubSection = 'dashboard',
+  onSelectHubSection,
+  currentSection = 'overview',
   onSelectSection,
-  onCloseMobile,
   eventName = 'Casamento Marina & Lucas',
-  rsvpDeadline = '10/Out/2026',
-  onOpenPreview,
-  isMasterView = false,
+  rsvpDeadline = '10/10/26',
   onExitToMaster,
-  onCopyEventLink,
-  hasCopiedLink = false,
+  onOpenPreview,
+  onCloseMobile,
+  isCollapsed = false,
+  onToggleCollapse,
 }) => {
-  const renderIcon = (name: NavItem['iconName'], isActive: boolean) => {
+  const renderEventIcon = (name: NavItem['iconName'], isActive: boolean) => {
     const iconClass = `w-4 h-4 transition-transform duration-200 ${
-      isActive ? 'text-[#1B3024]' : 'text-[#DFFFAE] group-hover:scale-110'
+      isActive ? 'text-[#180D20]' : 'text-[#DFFF5F]'
     }`;
 
-    let iconElement: React.ReactNode;
     switch (name) {
       case 'LayoutDashboard':
-        iconElement = <LayoutDashboard className={iconClass} />;
-        break;
+        return <LayoutDashboard className={iconClass} />;
       case 'Calendar':
-        iconElement = <Calendar className={iconClass} />;
-        break;
+        return <Calendar className={iconClass} />;
       case 'FileText':
-        iconElement = <FileText className={iconClass} />;
-        break;
+        return <FileText className={iconClass} />;
       case 'Users':
-        iconElement = <Users className={iconClass} />;
-        break;
+        return <Users className={iconClass} />;
       case 'UserCheck':
-        iconElement = <UserCheck className={iconClass} />;
-        break;
+        return <UserCheck className={iconClass} />;
       case 'BarChart3':
-        iconElement = <BarChart3 className={iconClass} />;
-        break;
+        return <BarChart3 className={iconClass} />;
       case 'Settings':
-        iconElement = <Settings className={iconClass} />;
-        break;
+        return <Settings className={iconClass} />;
       default:
-        iconElement = <LayoutDashboard className={iconClass} />;
+        return <LayoutDashboard className={iconClass} />;
     }
-
-    return (
-      <div
-        className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 transition-all shadow-xs ${
-          isActive
-            ? 'bg-[#DFFFAE] text-[#1B3024] shadow-md ring-2 ring-[#DFFFAE]/40'
-            : 'bg-[#FEFDF3]/10 text-[#DFFFAE] border border-[#FEFDF3]/15 group-hover:bg-[#FEFDF3]/20 group-hover:border-[#DFFFAE]/40'
-        }`}
-      >
-        {iconElement}
-      </div>
-    );
   };
 
   return (
     <aside
       id="admin-sidebar"
-      className="w-72 h-full bg-[#1B3024] text-[#FEFDF3] flex flex-col justify-between border-r border-[#1B3024]/40 shadow-xl select-none"
+      className={`relative h-full bg-[#24152F] text-[#F7F1E5] flex flex-col justify-between border-r border-[#3F2553]/60 shadow-2xl select-none transition-all duration-300 ease-in-out ${
+        isCollapsed ? 'w-20' : 'w-72'
+      }`}
     >
       {/* Top Brand Header */}
-      <div className="p-5 sm:p-6 border-b border-[#FEFDF3]/10">
-        <div className="flex items-center justify-between">
+      <div className={`border-b border-[#3F2553]/60 transition-all duration-300 ${isCollapsed ? 'p-4' : 'p-5 sm:p-6'}`}>
+        <div className={`flex items-center ${isCollapsed ? 'justify-center' : 'justify-between'}`}>
           <div
             onClick={onExitToMaster}
-            className="flex items-center space-x-3 cursor-pointer group"
-            title="Ir para o Painel Geral Beaquos"
+            className="cursor-pointer group transition-opacity hover:opacity-90 flex items-center justify-center"
+            title="Rafluo — Gestão inteligente de confirmações"
           >
-            <div className="w-10 h-10 rounded-lg bg-[#231F20] border border-[#DFFFAE]/40 flex items-center justify-center shadow-inner group-hover:border-[#DFFFAE] transition-colors">
-              <span className="font-bold text-base text-[#DFFFAE] tracking-tighter">B·</span>
-            </div>
-            <div>
-              <div className="flex items-center space-x-1.5">
-                <span className="font-bold text-sm tracking-widest text-[#FEFDF3]">BEAQUOS</span>
-                <span className="text-[10px] uppercase font-semibold px-1.5 py-0.5 rounded bg-[#DFFFAE]/20 text-[#DFFFAE]">
-                  RSVP
-                </span>
-              </div>
-              <p className="text-[11px] text-[#FEFDF3]/60 tracking-tight">Estúdio Criativo</p>
-            </div>
+            {isCollapsed ? (
+              <RafluoLogo variant="dark" size="sm" symbolOnly={true} />
+            ) : (
+              <RafluoLogo variant="dark" size="md" showDescriptor showOrigin={false} />
+            )}
           </div>
 
-          {onCloseMobile && (
+          {onCloseMobile && !isCollapsed && (
             <button
+              type="button"
               id="btn-close-sidebar-mobile"
               onClick={onCloseMobile}
-              className="lg:hidden p-1.5 rounded-lg text-[#FEFDF3]/70 hover:text-[#FEFDF3] hover:bg-[#FEFDF3]/10 transition-colors cursor-pointer"
+              className="lg:hidden p-1.5 rounded-lg text-[#D2C4DC] hover:text-[#F7F1E5] hover:bg-[#2E1B3C] transition-colors cursor-pointer"
               aria-label="Fechar menu"
             >
               <X className="w-5 h-5" />
@@ -177,174 +176,280 @@ export const Sidebar: React.FC<SidebarProps> = ({
           )}
         </div>
 
-        {/* Master vs Event Workspace Card */}
-        {isMasterView ? (
-          <div className="mt-4 p-3 rounded-xl bg-[#231F20]/70 border border-[#DFFFAE]/30">
-            <div className="flex items-center gap-1.5 text-[11px] text-[#DFFFAE] font-bold uppercase tracking-wider mb-1">
-              <LayoutGrid className="w-3.5 h-3.5" />
-              <span>Painel Geral Multi-Eventos</span>
-            </div>
-            <p className="text-xs text-[#FEFDF3]/80">
-              Visualizando todos os eventos cadastrados. Clique em um evento para abrir o painel individual.
-            </p>
-          </div>
-        ) : (
+        {/* When inside an event workspace, show active event card and back button */}
+        {!isMasterView && (
           <div className="mt-4 space-y-2">
-            {/* Explicit Back to Master Button */}
             {onExitToMaster && (
-              <button
-                type="button"
-                id="btn-sidebar-exit-to-master"
-                onClick={() => {
-                  onExitToMaster();
-                  if (onCloseMobile) onCloseMobile();
-                }}
-                className="w-full flex items-center justify-between px-3 py-2 rounded-xl bg-[#231F20]/80 hover:bg-[#231F20] border border-[#FEFDF3]/15 text-xs text-[#DFFFAE] font-semibold transition-all cursor-pointer group shadow-xs"
-              >
-                <div className="flex items-center gap-2 truncate">
-                  <div className="w-6 h-6 rounded-md bg-[#DFFFAE]/20 text-[#DFFFAE] flex items-center justify-center flex-shrink-0 group-hover:bg-[#DFFFAE] group-hover:text-[#1B3024] transition-colors">
-                    <ArrowLeft className="w-3.5 h-3.5" />
+              isCollapsed ? (
+                <button
+                  type="button"
+                  id="btn-sidebar-exit-to-master-collapsed"
+                  onClick={() => {
+                    onExitToMaster();
+                    if (onCloseMobile) onCloseMobile();
+                  }}
+                  title="Voltar ao Hub Geral"
+                  className="w-10 h-10 mx-auto rounded-xl bg-[#180D20] hover:bg-[#2E1B3C] border border-[#3F2553] text-[#DFFF5F] flex items-center justify-center transition-all cursor-pointer relative group shadow-xs"
+                >
+                  <ArrowLeft className="w-4 h-4" />
+                  <div className="absolute left-full ml-3 px-3 py-1.5 bg-[#180D20] text-[#F7F1E5] text-xs font-semibold rounded-xl shadow-xl border border-[#3F2553] whitespace-nowrap z-50 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-150">
+                    Voltar ao Hub Geral
                   </div>
-                  <span className="truncate">Sair para o Painel Geral</span>
-                </div>
-                <span className="text-[10px] bg-[#DFFFAE]/20 text-[#DFFFAE] px-2 py-0.5 rounded-full font-bold">Hub</span>
-              </button>
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  id="btn-sidebar-exit-to-master"
+                  onClick={() => {
+                    onExitToMaster();
+                    if (onCloseMobile) onCloseMobile();
+                  }}
+                  className="w-full flex items-center justify-between px-3 py-2 rounded-xl bg-[#180D20]/90 hover:bg-[#180D20] border border-[#3F2553] text-xs text-[#DFFF5F] font-semibold transition-all cursor-pointer group shadow-xs"
+                >
+                  <div className="flex items-center gap-2 truncate">
+                    <div className="w-5 h-5 rounded-md bg-[#DFFF5F]/20 text-[#DFFF5F] flex items-center justify-center flex-shrink-0 group-hover:bg-[#DFFF5F] group-hover:text-[#180D20] transition-colors">
+                      <ArrowLeft className="w-3 h-3" />
+                    </div>
+                    <span className="truncate">Voltar ao Hub Geral</span>
+                  </div>
+                  <span className="text-[10px] bg-[#DFFF5F]/20 text-[#DFFF5F] px-1.5 py-0.5 rounded-full font-bold">
+                    Hub
+                  </span>
+                </button>
+              )
             )}
 
-            {/* Current Active Event Box */}
-            <div className="p-3 rounded-xl bg-[#231F20]/60 border border-[#FEFDF3]/10">
-              <div className="flex items-center justify-between text-[11px] text-[#FEFDF3]/60 mb-1">
-                <span className="flex items-center gap-1 font-medium">
-                  <Sparkles className="w-3 h-3 text-[#DFFFAE]" /> Evento Selecionado
-                </span>
-                <span className="text-[10px] text-[#DFFFAE] font-medium">Ativo</span>
+            {isCollapsed ? (
+              <div
+                title={`${eventName} (RSVP até: ${formatDateBR(rsvpDeadline)})`}
+                className="w-10 h-10 mx-auto rounded-xl bg-[#180D20]/60 border border-[#3F2553]/70 flex items-center justify-center text-[#DFFF5F] relative group cursor-pointer"
+              >
+                <Sparkles className="w-4 h-4" />
+                <div className="absolute left-full ml-3 px-3 py-2 bg-[#180D20] text-[#F7F1E5] text-xs rounded-xl shadow-xl border border-[#3F2553] whitespace-nowrap z-50 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-150">
+                  <p className="font-bold text-[#DFFF5F]">{eventName}</p>
+                  <p className="text-[10px] text-[#D2C4DC] mt-0.5">RSVP: {formatDateBR(rsvpDeadline)}</p>
+                </div>
               </div>
-              <p className="text-xs font-semibold text-[#FEFDF3] truncate">{eventName}</p>
-              <p className="text-[10px] text-[#FEFDF3]/70 mt-0.5">Confirmação até: {formatDateBR(rsvpDeadline)}</p>
-            </div>
+            ) : (
+              <div className="p-3 rounded-xl bg-[#180D20]/60 border border-[#3F2553]/70">
+                <div className="flex items-center justify-between text-[11px] text-[#D2C4DC] mb-1">
+                  <span className="flex items-center gap-1 font-medium">
+                    <Sparkles className="w-3 h-3 text-[#DFFF5F]" /> Evento Selecionado
+                  </span>
+                  <span className="text-[10px] text-[#DFFF5F] font-bold px-1.5 py-0.2 rounded bg-[#DFFF5F]/15">
+                    Ativo
+                  </span>
+                </div>
+                <p className="text-xs font-semibold text-[#F7F1E5] truncate">{eventName}</p>
+                <p className="text-[10px] text-[#D2C4DC]/80 mt-0.5">
+                  RSVP até: {formatDateBR(rsvpDeadline)}
+                </p>
+              </div>
+            )}
           </div>
         )}
       </div>
 
       {/* Navigation Section */}
-      <nav className="flex-1 overflow-y-auto px-4 py-5 space-y-1.5">
-        <div className="flex items-center justify-between px-3 mb-2">
-          <p className="text-[10px] font-bold uppercase tracking-wider text-[#FEFDF3]/40">
-            {isMasterView ? 'Gestão Geral' : 'Menu do Evento'}
+      <nav className={`flex-1 overflow-y-auto space-y-1.5 transition-all duration-300 ${isCollapsed ? 'px-2 py-4' : 'px-3.5 py-4'}`}>
+        {!isCollapsed && (
+          <p className="px-3 mb-2 text-[10px] font-bold uppercase tracking-wider text-[#D2C4DC]/50 truncate">
+            {isMasterView ? 'Hub Geral' : 'Menu do Evento'}
           </p>
-          {!isMasterView && onExitToMaster && (
-            <button
-              onClick={() => {
-                onExitToMaster();
-                if (onCloseMobile) onCloseMobile();
-              }}
-              className="text-[10px] text-[#DFFFAE] hover:underline font-medium cursor-pointer"
-            >
-              Meus Eventos
-            </button>
-          )}
-        </div>
+        )}
 
         {isMasterView ? (
+          /* Hub Main Navigation: Exactly Dashboard, Eventos, Relatórios, Usuários */
           <div className="space-y-1.5">
-            <button
-              type="button"
-              id="sidebar-master-hub"
-              className="w-full text-left flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold bg-[#231F20] text-[#FEFDF3] shadow-sm ring-1 ring-[#DFFFAE]/30 cursor-pointer"
-            >
-              <div className="flex items-center space-x-3">
-                <div className="w-8 h-8 rounded-lg bg-[#DFFFAE] text-[#1B3024] flex items-center justify-center flex-shrink-0 shadow-xs">
-                  <LayoutGrid className="w-4 h-4 text-[#1B3024]" />
-                </div>
-                <span>Hub de Eventos</span>
-              </div>
-              <ChevronRight className="w-3.5 h-3.5 text-[#DFFFAE]" />
-            </button>
+            {HUB_NAV_ITEMS.map((item) => {
+              const Icon = item.icon;
+              const isActive = currentHubSection === item.id;
 
-            <button
-              type="button"
-              onClick={() => onSelectSection('settings')}
-              className="w-full text-left flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-medium text-[#FEFDF3]/80 hover:text-[#FEFDF3] hover:bg-[#FEFDF3]/10 cursor-pointer group"
-            >
-              <div className="flex items-center space-x-3">
-                <div className="w-8 h-8 rounded-lg bg-[#FEFDF3]/10 text-[#DFFFAE] border border-[#FEFDF3]/15 flex items-center justify-center flex-shrink-0 group-hover:bg-[#FEFDF3]/20 transition-colors">
-                  <Settings className="w-4 h-4 text-[#DFFFAE]" />
-                </div>
-                <span>Configurações Globais</span>
-              </div>
-            </button>
-          </div>
-        ) : (
-          EVENT_NAV_ITEMS.map((item) => {
-            const isActive = currentSection === item.id;
-            return (
-              <button
-                key={item.id}
-                id={`nav-item-${item.id}`}
-                onClick={() => {
-                  onSelectSection(item.id);
-                  if (onCloseMobile) onCloseMobile();
-                }}
-                className={`w-full group text-left flex items-center justify-between px-3.5 py-2.5 rounded-lg text-xs font-medium transition-all cursor-pointer ${
-                  isActive
-                    ? 'bg-[#231F20] text-[#FEFDF3] shadow-sm ring-1 ring-[#DFFFAE]/30'
-                    : 'text-[#FEFDF3]/80 hover:text-[#FEFDF3] hover:bg-[#FEFDF3]/10'
-                }`}
-              >
-                <div className="flex items-center space-x-3 truncate">
-                  {renderIcon(item.iconName, isActive)}
-                  <span className="truncate">{item.label}</span>
-                </div>
-
-                <div className="flex items-center space-x-1.5 flex-shrink-0">
-                  {item.badge && (
-                    <span
-                      className={`text-[10px] px-2 py-0.5 rounded-full font-semibold transition-colors ${
+              if (isCollapsed) {
+                return (
+                  <div key={item.id} className="relative group">
+                    <button
+                      type="button"
+                      id={`hub-nav-${item.id}-collapsed`}
+                      onClick={() => {
+                        if (onSelectHubSection) onSelectHubSection(item.id);
+                        if (onCloseMobile) onCloseMobile();
+                      }}
+                      title={item.label}
+                      className={`w-10 h-10 mx-auto rounded-xl flex items-center justify-center transition-all cursor-pointer relative ${
                         isActive
-                          ? 'bg-[#DFFFAE] text-[#1B3024]'
-                          : 'bg-[#FEFDF3]/10 text-[#FEFDF3]/70 group-hover:bg-[#FEFDF3]/20 group-hover:text-[#FEFDF3]'
+                          ? 'bg-[#DFFF5F] text-[#180D20] shadow-sm ring-2 ring-[#DFFF5F]/50 font-bold'
+                          : 'bg-[#180D20] text-[#D2C4DC] hover:text-[#F7F1E5] hover:bg-[#2E1B3C] border border-[#3F2553]'
                       }`}
                     >
-                      {item.badge}
-                    </span>
+                      <Icon className={`w-4 h-4 ${isActive ? 'text-[#180D20]' : 'text-[#DFFF5F]'}`} />
+                    </button>
+
+                    {/* Floating Tooltip when collapsed */}
+                    <div className="absolute left-full ml-3 top-1/2 -translate-y-1/2 px-3 py-1.5 bg-[#180D20] text-[#F7F1E5] text-xs font-semibold rounded-xl shadow-xl border border-[#3F2553] whitespace-nowrap z-50 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-150">
+                      {item.label}
+                    </div>
+                  </div>
+                );
+              }
+
+              return (
+                <button
+                  key={item.id}
+                  type="button"
+                  id={`hub-nav-${item.id}`}
+                  onClick={() => {
+                    if (onSelectHubSection) onSelectHubSection(item.id);
+                    if (onCloseMobile) onCloseMobile();
+                  }}
+                  className={`w-full group text-left flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-medium transition-all cursor-pointer relative ${
+                    isActive
+                      ? 'bg-[#2E1B3C] text-[#F7F1E5] font-semibold shadow-sm ring-1 ring-[#DFFF5F]/35'
+                      : 'text-[#D2C4DC] hover:text-[#F7F1E5] hover:bg-[#2E1B3C]/50'
+                  }`}
+                >
+                  {isActive && (
+                    <span className="absolute left-1 top-2.5 bottom-2.5 w-1 rounded-full bg-[#DFFF5F]" />
                   )}
-                  {isActive && <ChevronRight className="w-3.5 h-3.5 text-[#DFFFAE]" />}
-                </div>
-              </button>
-            );
-          })
+
+                  <div className="flex items-center space-x-3 truncate pl-1">
+                    <div
+                      className={`w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 transition-all ${
+                        isActive
+                          ? 'bg-[#DFFF5F] text-[#180D20] shadow-sm'
+                          : 'bg-[#180D20] text-[#DFFF5F] border border-[#3F2553] group-hover:bg-[#2E1B3C]'
+                      }`}
+                    >
+                      <Icon className="w-4 h-4" />
+                    </div>
+                    <span className="text-xs font-semibold">{item.label}</span>
+                  </div>
+
+                  {isActive && <ChevronRight className="w-3.5 h-3.5 text-[#DFFF5F]" />}
+                </button>
+              );
+            })}
+          </div>
+        ) : (
+          /* Specific Event Navigation */
+          <div className="space-y-1.5">
+            {EVENT_NAV_ITEMS.map((item) => {
+              const isActive = currentSection === item.id;
+
+              if (isCollapsed) {
+                return (
+                  <div key={item.id} className="relative group">
+                    <button
+                      type="button"
+                      id={`nav-item-${item.id}-collapsed`}
+                      onClick={() => {
+                        if (onSelectSection) onSelectSection(item.id);
+                        if (onCloseMobile) onCloseMobile();
+                      }}
+                      title={item.label}
+                      className={`w-10 h-10 mx-auto rounded-xl flex items-center justify-center transition-all cursor-pointer relative ${
+                        isActive
+                          ? 'bg-[#DFFF5F] text-[#180D20] shadow-sm ring-2 ring-[#DFFF5F]/50 font-bold'
+                          : 'bg-[#180D20] text-[#D2C4DC] hover:text-[#F7F1E5] hover:bg-[#2E1B3C] border border-[#3F2553]'
+                      }`}
+                    >
+                      {renderEventIcon(item.iconName, isActive)}
+                    </button>
+
+                    {/* Floating Tooltip when collapsed */}
+                    <div className="absolute left-full ml-3 top-1/2 -translate-y-1/2 px-3 py-1.5 bg-[#180D20] text-[#F7F1E5] text-xs font-semibold rounded-xl shadow-xl border border-[#3F2553] whitespace-nowrap z-50 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-150">
+                      {item.label}
+                    </div>
+                  </div>
+                );
+              }
+
+              return (
+                <button
+                  key={item.id}
+                  type="button"
+                  id={`nav-item-${item.id}`}
+                  onClick={() => {
+                    if (onSelectSection) onSelectSection(item.id);
+                    if (onCloseMobile) onCloseMobile();
+                  }}
+                  className={`w-full group text-left flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium transition-all cursor-pointer relative ${
+                    isActive
+                      ? 'bg-[#2E1B3C] text-[#F7F1E5] font-semibold shadow-sm ring-1 ring-[#DFFF5F]/35'
+                      : 'text-[#D2C4DC] hover:text-[#F7F1E5] hover:bg-[#2E1B3C]/50'
+                  }`}
+                >
+                  {isActive && (
+                    <span className="absolute left-1 top-2.5 bottom-2.5 w-1 rounded-full bg-[#DFFF5F]" />
+                  )}
+
+                  <div className="flex items-center space-x-2.5 truncate pl-1">
+                    <div
+                      className={`w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 transition-all ${
+                        isActive
+                          ? 'bg-[#DFFF5F] text-[#180D20] shadow-sm'
+                          : 'bg-[#180D20] text-[#DFFF5F] border border-[#3F2553] group-hover:bg-[#2E1B3C]'
+                      }`}
+                    >
+                      {renderEventIcon(item.iconName, isActive)}
+                    </div>
+                    <span className="truncate">{item.label}</span>
+                  </div>
+
+                  {isActive && <ChevronRight className="w-3.5 h-3.5 text-[#DFFF5F]" />}
+                </button>
+              );
+            })}
+          </div>
         )}
       </nav>
 
-      {/* Footer Profile & Link */}
-      <div className="p-4 border-t border-[#FEFDF3]/10 bg-[#231F20]/40">
-        <div className="flex items-center justify-between p-2.5 rounded-lg bg-[#1B3024]/60 border border-[#FEFDF3]/10 mb-2.5">
-          <div className="flex items-center space-x-2.5 truncate">
-            <div className="w-8 h-8 rounded-full bg-[#DFFFAE] text-[#1B3024] font-bold text-xs flex items-center justify-center flex-shrink-0">
-              AD
-            </div>
-            <div className="truncate">
-              <p className="text-xs font-semibold text-[#FEFDF3] truncate">Admin Beaquos</p>
-              <p className="text-[10px] text-[#FEFDF3]/50 truncate">beaquos@gmail.com</p>
+      {/* Bottom Action & Collapse Button Area */}
+      <div className={`border-t border-[#3F2553]/60 bg-[#180D20]/50 space-y-2.5 transition-all duration-300 ${isCollapsed ? 'p-3 flex flex-col items-center' : 'p-4'}`}>
+        {/* Preview Guest RSVP button */}
+        {isCollapsed ? (
+          <div className="relative group">
+            <button
+              type="button"
+              id="btn-preview-rsvp-link-collapsed"
+              onClick={() => {
+                if (onOpenPreview) onOpenPreview();
+              }}
+              title="Ver Tela do Convidado"
+              className="w-10 h-10 rounded-xl flex items-center justify-center text-[#180D20] bg-[#DFFF5F] hover:bg-[#CEF04A] transition-all shadow-sm active:scale-95 cursor-pointer group"
+            >
+              <ExternalLink className="w-4 h-4 text-[#180D20] group-hover:scale-110 transition-transform" />
+            </button>
+            <div className="absolute left-full ml-3 top-1/2 -translate-y-1/2 px-3 py-1.5 bg-[#180D20] text-[#F7F1E5] text-xs font-semibold rounded-xl shadow-xl border border-[#3F2553] whitespace-nowrap z-50 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-150">
+              Ver Tela do Convidado
             </div>
           </div>
-          <ShieldCheck className="w-4 h-4 text-[#DFFFAE] flex-shrink-0" />
-        </div>
+        ) : (
+          <button
+            type="button"
+            id="btn-preview-rsvp-link"
+            onClick={() => {
+              if (onOpenPreview) onOpenPreview();
+            }}
+            className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-xl text-xs font-bold text-[#180D20] bg-[#DFFF5F] hover:bg-[#CEF04A] transition-all shadow-sm active:scale-98 cursor-pointer group"
+            title="Visualizar a tela pública de confirmação"
+          >
+            <div className="w-4 h-4 rounded-md bg-[#180D20]/15 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
+              <ExternalLink className="w-3 h-3 text-[#180D20]" />
+            </div>
+            <span>Ver Tela do Convidado</span>
+          </button>
+        )}
 
-        <button
-          id="btn-preview-rsvp-link"
-          onClick={() => {
-            if (onOpenPreview) {
-              onOpenPreview();
-            }
-          }}
-          className="w-full flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl text-xs font-bold text-[#1B3024] bg-[#DFFFAE] hover:bg-[#DFFFAE]/90 transition-all shadow-sm active:scale-98 cursor-pointer group"
-        >
-          <div className="w-5 h-5 rounded-md bg-[#1B3024]/15 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
-            <ExternalLink className="w-3.5 h-3.5 text-[#1B3024]" />
+        {/* 3. Botão circular de recolher/expandir sidebar centralizado na parte inferior */}
+        {onToggleCollapse && (
+          <div className="pt-2 border-t border-[#3F2553]/40 w-full flex justify-center items-center">
+            <SidebarToggle
+              isCollapsed={isCollapsed}
+              onToggle={onToggleCollapse}
+            />
           </div>
-          <span>Testar Link Convidado</span>
-        </button>
+        )}
       </div>
     </aside>
   );

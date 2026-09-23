@@ -1,6 +1,20 @@
 import React, { useEffect } from 'react';
-import { X, CheckCircle, XCircle, Clock, User, Phone, Users } from 'lucide-react';
+import {
+  X,
+  CheckCircle2,
+  XCircle,
+  Clock,
+  User,
+  Users,
+  Mail,
+  Phone,
+  Tag,
+  KeyRound,
+  FileQuestion,
+  CalendarCheck,
+} from 'lucide-react';
 import { GuestData, FormQuestionData } from '../../data/mockData';
+import { formatDateTimeBR } from '../../utils/dateUtils';
 
 interface GuestDetailsModalProps {
   isOpen: boolean;
@@ -28,28 +42,9 @@ export const GuestDetailsModal: React.FC<GuestDetailsModalProps> = ({
 
   if (!isOpen || !guest) return null;
 
-  const renderStatusBadge = () => {
-    switch (guest.status) {
-      case 'confirmed':
-        return (
-          <span className="flex items-center gap-1 text-xs px-2.5 py-1 rounded-full font-bold bg-[#DFFFAE] text-[#1B3024]">
-            <CheckCircle className="w-3.5 h-3.5" /> Presença Confirmada
-          </span>
-        );
-      case 'declined':
-        return (
-          <span className="flex items-center gap-1 text-xs px-2.5 py-1 rounded-full font-bold bg-[#231F20]/10 text-[#231F20]/70">
-            <XCircle className="w-3.5 h-3.5" /> Não Comparecerá
-          </span>
-        );
-      default:
-        return (
-          <span className="flex items-center gap-1 text-xs px-2.5 py-1 rounded-full font-bold bg-amber-100 text-amber-900">
-            <Clock className="w-3.5 h-3.5" /> Resposta Pendente
-          </span>
-        );
-    }
-  };
+  const formattedRespondedAt = guest.respondedAt
+    ? formatDateTimeBR(guest.respondedAt)
+    : null;
 
   return (
     <div
@@ -61,109 +56,277 @@ export const GuestDetailsModal: React.FC<GuestDetailsModalProps> = ({
           onClose();
         }
       }}
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#231F20]/60 backdrop-blur-xs overflow-y-auto"
+      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-[#24152F]/70 backdrop-blur-xs overflow-y-auto"
     >
-      <div className="relative w-full max-w-lg bg-[#FEFDF3] rounded-2xl border border-[#231F20]/10 shadow-2xl overflow-hidden my-8">
-        <div className="px-6 py-4 bg-[#1B3024] text-[#FEFDF3] flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            <User className="w-5 h-5 text-[#DFFFAE]" />
-            <h3 className="font-bold text-base">Ficha de Resposta do Convidado</h3>
+      <div className="relative w-full max-w-xl bg-white rounded-3xl border border-[#24152F]/15 shadow-2xl overflow-hidden my-auto max-h-[92vh] flex flex-col animate-in fade-in zoom-in-95 duration-150">
+        {/* Header */}
+        <div className="px-4 sm:px-5 py-3.5 sm:py-4 bg-[#24152F] text-[#F7F1E5] flex items-center justify-between border-b border-[#3F2553] flex-shrink-0">
+          <div className="flex items-center space-x-2.5 min-w-0 pr-2">
+            <div className="w-8 h-8 rounded-xl bg-[#DFFF5F] text-[#180D20] flex items-center justify-center font-bold flex-shrink-0 shadow-2xs">
+              <User className="w-4 h-4 text-[#180D20]" />
+            </div>
+            <div className="min-w-0">
+              <h3 className="font-bold text-sm sm:text-base text-[#F7F1E5] truncate">Ficha de Resposta do Convidado</h3>
+              <p className="text-[10px] sm:text-[11px] text-[#D2C4DC] truncate">Dados cadastrais e detalhes da confirmação</p>
+            </div>
           </div>
           <button
             type="button"
             id="btn-close-guest-details-modal"
             onClick={onClose}
-            aria-label="Fechar modal"
-            className="p-1 rounded-lg hover:bg-[#FEFDF3]/15 text-[#FEFDF3] cursor-pointer"
+            aria-label="Fechar"
+            className="p-1.5 rounded-lg hover:bg-white/10 text-[#F7F1E5] cursor-pointer transition-colors flex-shrink-0"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        <div className="p-6 space-y-4 text-xs text-[#231F20] max-h-[80vh] overflow-y-auto">
-          {/* Guest Identity Card */}
-          <div className="p-4 rounded-xl border border-[#231F20]/10 bg-white flex items-start justify-between">
-            <div className="space-y-1">
-              <h4 className="font-bold text-sm text-[#231F20]">{guest.name}</h4>
-              <p className="text-[#231F20]/60 text-xs">Exibição: {guest.displayName}</p>
-              <div className="flex items-center gap-3 text-[11px] text-[#231F20]/70 pt-1">
-                <span>{guest.phone || 'Sem telefone'}</span>
-                <span>•</span>
-                <span>Grupo: <strong>{guest.group}</strong></span>
-                <span>•</span>
-                <span className="font-mono text-[#1B3024] font-bold">Código: {guest.rsvpCode}</span>
+        {/* Scrollable Body */}
+        <div className="p-4 sm:p-6 space-y-5 sm:space-y-6 overflow-y-auto flex-1 text-xs text-[#24152F]">
+          {/* Section 8: Destaque Visual "Confirmado em / Resposta" */}
+          {guest.status === 'confirmed' ? (
+            <div className="p-4 rounded-2xl bg-[#DFFF5F]/20 border border-[#DFFF5F] flex items-center gap-3 shadow-xs">
+              <div className="w-9 h-9 rounded-xl bg-[#24152F] text-[#DFFF5F] flex items-center justify-center flex-shrink-0 shadow-2xs">
+                <CalendarCheck className="w-5 h-5 text-[#DFFF5F]" />
+              </div>
+              <div className="min-w-0">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-[#24152F]/70 block">
+                  Presença Confirmada
+                </span>
+                <p className="text-sm sm:text-base font-extrabold text-[#180D20] truncate">
+                  {formattedRespondedAt
+                    ? `Confirmado em ${formattedRespondedAt}`
+                    : 'Confirmado pelo convidado'}
+                </p>
               </div>
             </div>
-            <div>{renderStatusBadge()}</div>
-          </div>
-
-          {/* Companions Details */}
-          {guest.status === 'confirmed' && (
-            <div className="p-3.5 rounded-xl border border-[#1B3024]/20 bg-[#DFFFAE]/15 space-y-2">
-              <div className="flex items-center justify-between font-semibold text-[#1B3024]">
-                <span className="flex items-center gap-1.5">
-                  <Users className="w-4 h-4" /> Acompanhantes Confirmados:
-                </span>
-                <span className="font-bold text-sm">+{guest.companionCount}</span>
+          ) : guest.status === 'declined' ? (
+            <div className="p-4 rounded-2xl bg-rose-50 border border-rose-200 flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-rose-100 text-rose-700 flex items-center justify-center flex-shrink-0">
+                <XCircle className="w-5 h-5 text-rose-700" />
               </div>
-
-              {guest.companionNames.length > 0 ? (
-                <div className="space-y-1 pt-1 border-t border-[#1B3024]/10">
-                  <p className="text-[11px] text-[#1B3024]/80 font-medium">Nomes informados:</p>
-                  <ul className="list-disc list-inside space-y-0.5 font-medium">
-                    {guest.companionNames.map((name, idx) => (
-                      <li key={idx}>{name}</li>
-                    ))}
-                  </ul>
-                </div>
-              ) : (
-                <p className="text-[11px] text-[#231F20]/60">Sem acompanhantes (irá sozinho).</p>
-              )}
+              <div className="min-w-0">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-rose-800/80 block">
+                  Ausência Registrada
+                </span>
+                <p className="text-sm font-bold text-rose-900 truncate">
+                  {formattedRespondedAt
+                    ? `Registrado em ${formattedRespondedAt}`
+                    : 'Não comparecerá ao evento'}
+                </p>
+              </div>
+            </div>
+          ) : (
+            <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-amber-100 text-amber-800 flex items-center justify-center flex-shrink-0">
+                <Clock className="w-5 h-5 text-amber-800" />
+              </div>
+              <div>
+                <span className="text-[11px] font-bold uppercase tracking-wider text-amber-800 block">
+                  Aguardando Resposta
+                </span>
+                <p className="text-xs text-amber-900 font-semibold">
+                  O convidado ainda não respondeu ao convite RSVP.
+                </p>
+              </div>
             </div>
           )}
 
-          {/* Form Answers */}
-          <div className="space-y-2.5">
-            <h5 className="font-bold text-xs uppercase tracking-wider text-[#231F20]/60">
-              Respostas do Formulário Personalizado
-            </h5>
+          {/* Section 9: Dados do convidado */}
+          <div className="space-y-3">
+            <h4 className="text-xs font-bold uppercase tracking-wider text-[#24152F]/60 flex items-center gap-1.5 pb-1 border-b border-[#24152F]/10">
+              <User className="w-3.5 h-3.5 text-[#24152F]" />
+              <span>Dados do Convidado</span>
+            </h4>
 
-            {Object.keys(guest.answers).length === 0 ? (
-              <div className="p-4 rounded-xl border border-[#231F20]/10 bg-white text-center text-[#231F20]/60">
-                Nenhuma resposta enviada ainda. O convidado está pendente.
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="p-3 rounded-xl bg-[#FAF6EE] border border-[#24152F]/10">
+                <span className="text-[11px] font-bold text-[#24152F]/60 block mb-0.5">Nome:</span>
+                <p className="text-xs sm:text-sm font-bold text-[#24152F] break-words">
+                  {guest.name}
+                </p>
+                {guest.displayName && guest.displayName !== guest.name && (
+                  <p className="text-[11px] text-[#24152F]/60 mt-0.5">
+                    Exibição: "{guest.displayName}"
+                  </p>
+                )}
+              </div>
+
+              <div className="p-3 rounded-xl bg-[#FAF6EE] border border-[#24152F]/10">
+                <span className="text-[11px] font-bold text-[#24152F]/60 block mb-0.5">E-mail:</span>
+                <p className="text-xs sm:text-sm font-medium text-[#24152F] break-words">
+                  {guest.email || 'Não informado'}
+                </p>
+              </div>
+
+              <div className="p-3 rounded-xl bg-[#FAF6EE] border border-[#24152F]/10">
+                <span className="text-[11px] font-bold text-[#24152F]/60 block mb-0.5">Telefone:</span>
+                <p className="text-xs sm:text-sm font-medium text-[#24152F]">
+                  {guest.phone || 'Não informado'}
+                </p>
+              </div>
+
+              <div className="p-3 rounded-xl bg-[#FAF6EE] border border-[#24152F]/10">
+                <span className="text-[11px] font-bold text-[#24152F]/60 block mb-0.5">Grupo:</span>
+                <p className="text-xs sm:text-sm font-semibold text-[#24152F]">
+                  {guest.group || 'Geral'}
+                </p>
+              </div>
+            </div>
+
+            <div className="p-2.5 rounded-xl bg-white border border-[#24152F]/10 flex items-center justify-between text-[11px]">
+              <span className="font-semibold text-[#24152F]/70 flex items-center gap-1.5">
+                <KeyRound className="w-3.5 h-3.5 text-[#24152F]/50" />
+                Código de Acesso RSVP:
+              </span>
+              <span className="font-mono font-bold text-xs text-[#24152F] px-2.5 py-0.5 rounded-md bg-[#FAF6EE] border border-[#24152F]/10">
+                {guest.rsvpCode}
+              </span>
+            </div>
+          </div>
+
+          {/* Section 9: Resposta */}
+          <div className="space-y-3">
+            <h4 className="text-xs font-bold uppercase tracking-wider text-[#24152F]/60 flex items-center gap-1.5 pb-1 border-b border-[#24152F]/10">
+              <CheckCircle2 className="w-3.5 h-3.5 text-[#24152F]" />
+              <span>Resposta</span>
+            </h4>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div className="p-3 rounded-xl bg-[#FAF6EE] border border-[#24152F]/10">
+                <span className="text-[11px] font-bold text-[#24152F]/60 block mb-1">Status:</span>
+                <div>
+                  {guest.status === 'confirmed' ? (
+                    <span className="inline-block px-2.5 py-1 rounded-full text-xs font-bold bg-[#DFFF5F] text-[#180D20]">
+                      Confirmado
+                    </span>
+                  ) : guest.status === 'declined' ? (
+                    <span className="inline-block px-2.5 py-1 rounded-full text-xs font-bold bg-[#24152F]/10 text-[#24152F]">
+                      Recusado
+                    </span>
+                  ) : (
+                    <span className="inline-block px-2.5 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-900 border border-amber-200">
+                      Pendente
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              <div className="p-3 rounded-xl bg-[#FAF6EE] border border-[#24152F]/10 sm:col-span-2">
+                <span className="text-[11px] font-bold text-[#24152F]/60 block mb-1">
+                  Confirmado em:
+                </span>
+                <p className="text-xs sm:text-sm font-semibold text-[#24152F]">
+                  {formattedRespondedAt ? formattedRespondedAt : 'Ainda não respondeu'}
+                </p>
+              </div>
+
+              <div className="p-3 rounded-xl bg-[#FAF6EE] border border-[#24152F]/10 col-span-1 sm:col-span-3 flex flex-wrap sm:flex-nowrap items-center justify-between gap-2">
+                <div>
+                  <span className="text-[11px] font-bold text-[#24152F]/60 block">Acompanhantes:</span>
+                  <p className="text-xs text-[#24152F]/70">
+                    Cota máxima do convite: {guest.maxGuests} pessoa{guest.maxGuests > 1 ? 's' : ''}
+                  </p>
+                </div>
+                <span className="text-base sm:text-lg font-extrabold text-[#24152F] px-3 py-1 rounded-lg bg-white border border-[#24152F]/15">
+                  {guest.companionCount}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Section 9: Acompanhantes (somente quando existirem e com nomes) */}
+          {guest.companionCount > 0 && (
+            <div className="space-y-3">
+              <h4 className="text-xs font-bold uppercase tracking-wider text-[#24152F]/60 flex items-center gap-1.5 pb-1 border-b border-[#24152F]/10">
+                <Users className="w-3.5 h-3.5 text-[#24152F]" />
+                <span>Acompanhantes</span>
+              </h4>
+
+              <div className="p-4 rounded-xl border border-[#24152F]/10 bg-white space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-[#24152F]">
+                    Total de acompanhantes registrados:
+                  </span>
+                  <span className="px-2.5 py-0.5 rounded-full bg-[#FAF6EE] border border-[#24152F]/15 font-bold text-xs text-[#24152F]">
+                    {guest.companionCount}
+                  </span>
+                </div>
+
+                {guest.companionNames && guest.companionNames.length > 0 ? (
+                  <div className="pt-2 border-t border-[#24152F]/10 space-y-1.5">
+                    <p className="text-[11px] font-bold text-[#24152F]/70">Nomes registrados:</p>
+                    <div className="space-y-1">
+                      {guest.companionNames.map((name, index) => (
+                        <div
+                          key={index}
+                          className="px-3 py-2 rounded-lg bg-[#FAF6EE] text-xs font-medium text-[#24152F] flex items-center gap-2 border border-[#24152F]/5"
+                        >
+                          <span className="w-5 h-5 rounded-full bg-[#24152F] text-[#DFFF5F] text-[10px] font-bold flex items-center justify-center flex-shrink-0">
+                            {index + 1}
+                          </span>
+                          <span className="break-words">{name}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-[11px] text-[#24152F]/60 pt-1">
+                    Nenhum nome específico registrado para os acompanhantes.
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Section 9: Respostas do formulário */}
+          <div className="space-y-3">
+            <h4 className="text-xs font-bold uppercase tracking-wider text-[#24152F]/60 flex items-center gap-1.5 pb-1 border-b border-[#24152F]/10">
+              <FileQuestion className="w-3.5 h-3.5 text-[#24152F]" />
+              <span>Respostas do Formulário</span>
+            </h4>
+
+            {questions.length === 0 || Object.keys(guest.answers || {}).length === 0 ? (
+              <div className="p-4 rounded-xl border border-dashed border-[#24152F]/20 bg-[#FAF6EE]/50 text-center text-[#24152F]/60">
+                Nenhuma resposta adicional enviada pelo convidado.
               </div>
             ) : (
-              <div className="space-y-2">
+              <div className="space-y-3">
                 {questions.map((q) => {
-                  const ans = guest.answers[q.id];
+                  const ans = guest.answers ? guest.answers[q.id] : undefined;
                   if (ans === undefined || ans === null) return null;
 
                   return (
-                    <div key={q.id} className="p-3 rounded-lg border border-[#231F20]/10 bg-white space-y-1">
-                      <p className="font-semibold text-[#231F20] text-xs">{q.title}</p>
-                      <p className="text-[#1B3024] font-medium text-xs bg-[#FEFDF3] p-2 rounded border border-[#231F20]/5">
-                        {Array.isArray(ans) ? ans.join(', ') : String(ans)}
+                    <div
+                      key={q.id}
+                      className="p-3.5 rounded-xl border border-[#24152F]/10 bg-white space-y-1.5 shadow-2xs"
+                    >
+                      {/* Pergunta */}
+                      <p className="font-bold text-xs text-[#24152F] leading-snug">
+                        {q.title}
                       </p>
+                      {/* Resposta separada visualmente */}
+                      <div className="p-2.5 rounded-lg bg-[#FAF6EE] border border-[#24152F]/10 text-xs font-medium text-[#24152F] break-words">
+                        {Array.isArray(ans) ? ans.join(', ') : String(ans)}
+                      </div>
                     </div>
                   );
                 })}
               </div>
             )}
           </div>
+        </div>
 
-          <div className="flex items-center justify-between pt-3 border-t border-[#231F20]/10 text-[11px] text-[#231F20]/50">
-            <span>
-              {guest.respondedAt ? `Confirmado em: ${guest.respondedAt}` : 'Aguardando resposta'}
-            </span>
-            <button
-              type="button"
-              id="btn-close-guest-details-bottom"
-              onClick={onClose}
-              className="px-4 py-1.5 rounded-lg bg-[#1B3024] text-[#FEFDF3] font-semibold hover:bg-[#231F20] cursor-pointer transition-colors"
-            >
-              Fechar
-            </button>
-          </div>
+        {/* Footer Actions */}
+        <div className="p-4 bg-[#FAF6EE] border-t border-[#24152F]/10 flex items-center justify-end flex-shrink-0">
+          <button
+            type="button"
+            id="btn-close-guest-details-bottom"
+            onClick={onClose}
+            className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-[#24152F] text-[#F7F1E5] font-bold text-xs hover:bg-[#180D20] cursor-pointer transition-colors shadow-xs border border-[#3F2553] text-center"
+          >
+            Fechar
+          </button>
         </div>
       </div>
     </div>

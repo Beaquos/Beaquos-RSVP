@@ -5,6 +5,11 @@
 
 import React, { useState } from 'react';
 import { AdminLayout } from './components/admin/AdminLayout';
+import { HubDashboardView } from './components/admin/HubDashboardView';
+import { HubReportsView } from './components/admin/HubReportsView';
+import { HubUsersView } from './components/admin/HubUsersView';
+import { UserProfileModal } from './components/admin/UserProfileModal';
+import { LoginView } from './components/auth/LoginView';
 import { DashboardSkeleton } from './components/admin/DashboardSkeleton';
 import { MasterEventsHub } from './components/admin/MasterEventsHub';
 import { GuestRsvpView } from './components/guest/GuestRsvpView';
@@ -26,14 +31,74 @@ import {
   FormQuestionData,
   ManagerData,
 } from './data/mockData';
-import { NavSection } from './types/navigation';
+import { HubSection, NavSection } from './types/navigation';
+import { AdminUser, AdminUserStatus } from './types/user';
 import { copyToClipboard, getEventRsvpUrl } from './utils/linkUtils';
 
-export default function App() {
-  const [currentSection, setCurrentSection] = useState<NavSection>('overview');
+// Initial Registered Administrator User
+const INITIAL_ADMIN_USER: AdminUser = {
+  id: 'usr-01',
+  name: 'Beatriz',
+  lastName: 'Alencar',
+  email: 'beaquos@gmail.com',
+  phone: '(61) 98765-4321',
+  photoUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=256&h=256&q=80',
+  role: 'Super Administrador',
+  status: 'active',
+  createdAt: '2026-01-15',
+};
 
-  // Multi-event separation & navigation mode: 'master' (Hub geral) | 'event' (Painel do evento do cliente)
-  const [viewMode, setViewMode] = useState<'master' | 'event'>('event');
+const INITIAL_ADMIN_USERS_LIST: AdminUser[] = [
+  INITIAL_ADMIN_USER,
+  {
+    id: 'usr-02',
+    name: 'Lucas',
+    lastName: 'Ferreira',
+    email: 'lucas@beaquos.com',
+    phone: '(61) 99123-4567',
+    photoUrl: null,
+    role: 'Gestor de Eventos',
+    status: 'active',
+    createdAt: '2026-02-10',
+  },
+  {
+    id: 'usr-03',
+    name: 'Helena',
+    lastName: 'Vasconcelos',
+    email: 'helena.eventos@gmail.com',
+    phone: '(61) 98234-5678',
+    photoUrl: null,
+    role: 'Cerimonialista',
+    status: 'active',
+    createdAt: '2026-03-01',
+  },
+  {
+    id: 'usr-04',
+    name: 'Mariana',
+    lastName: 'Ribeiro',
+    email: 'mariana.apoio@beaquos.com',
+    phone: '(61) 98345-6789',
+    photoUrl: null,
+    role: 'Cerimonialista',
+    status: 'temporary',
+    accessStart: '2026-10-01',
+    accessEnd: '2026-10-31',
+    createdAt: '2026-09-21',
+  },
+];
+
+export default function App() {
+  // Authentication State
+  const [isAuthenticated, setIsAuthenticated] = useState(true);
+  const [currentUser, setCurrentUser] = useState<AdminUser>(INITIAL_ADMIN_USER);
+  const [adminUsers, setAdminUsers] = useState<AdminUser[]>(INITIAL_ADMIN_USERS_LIST);
+
+  // Hub Navigation State: 'dashboard' | 'events' | 'reports' | 'users'
+  const [currentHubSection, setCurrentHubSection] = useState<HubSection>('dashboard');
+
+  // Navigation mode: 'master' (Hub geral Rafluo) | 'event' (Painel do evento do cliente)
+  const [viewMode, setViewMode] = useState<'master' | 'event'>('master');
+  const [currentSection, setCurrentSection] = useState<NavSection>('overview');
 
   // Core Data States
   const [events, setEvents] = useState<EventData[]>(INITIAL_EVENTS);
@@ -51,6 +116,7 @@ export default function App() {
   const [isManagerModalOpen, setIsManagerModalOpen] = useState(false);
   const [isWhatsAppModalOpen, setIsWhatsAppModalOpen] = useState(false);
   const [isGuestDetailsModalOpen, setIsGuestDetailsModalOpen] = useState(false);
+  const [isUserProfileModalOpen, setIsUserProfileModalOpen] = useState(false);
 
   // Selected entities for modals
   const [selectedGuest, setSelectedGuest] = useState<GuestData | null>(null);
@@ -75,12 +141,13 @@ export default function App() {
     setActiveEventId(selected.id);
     setViewMode('event');
     setCurrentSection('overview');
-    setToastMessage(`Acessando o painel de "${selected.name}"`);
+    setToastMessage(`Acessando a gestão operacional de "${selected.name}"`);
   };
 
   const handleExitToMaster = () => {
     setViewMode('master');
-    setToastMessage('Você está no Painel Geral Beaquos (Hub de Eventos).');
+    setCurrentHubSection('events');
+    setToastMessage('Você está no Hub Administrativo Geral.');
   };
 
   // Copying event RSVP link
@@ -189,11 +256,15 @@ export default function App() {
   };
 
   const handleOpenGuestPreview = (guestCode?: string) => {
-    const code = guestCode || activeEventGuests[0]?.rsvpCode || guests[0]?.rsvpCode || 'BEA-7X9K2';
-    setPreviewGuestCode(code);
+    if (guestCode) {
+      setPreviewGuestCode(guestCode);
+    } else if (activeEventGuests.length > 0) {
+      setPreviewGuestCode(activeEventGuests[0].rsvpCode);
+    }
     setIsGuestPreviewMode(true);
   };
 
+  // Submit RSVP from the guest perspective
   const handleSubmitGuestRsvp = (
     guestId: string,
     status: 'confirmed' | 'declined',
@@ -201,36 +272,83 @@ export default function App() {
     companionNames: string[],
     answers: Record<string, any>
   ) => {
-    const now = new Date();
-    const formattedDate = `${now.getDate().toString().padStart(2, '0')}/${(now.getMonth() + 1)
-      .toString()
-      .padStart(2, '0')}/${now.getFullYear()} ${now.getHours().toString().padStart(2, '0')}:${now
-      .getMinutes()
-      .toString()
-      .padStart(2, '0')}`;
+    const updatedTimestamp = new Date().toISOString().split('T')[0];
 
     setGuests((prev) =>
-      prev.map((g) => {
-        if (g.id === guestId) {
-          return {
-            ...g,
-            status,
-            companionCount,
-            companionNames,
-            answers,
-            respondedAt: formattedDate,
-          };
-        }
-        return g;
-      })
+      prev.map((g) =>
+        g.id === guestId
+          ? {
+              ...g,
+              status,
+              companionCount,
+              companionNames,
+              respondedAt: updatedTimestamp,
+              answers: { ...g.answers, ...answers },
+            }
+          : g
+      )
+    );
+
+    setToastMessage(
+      status === 'confirmed'
+        ? 'Presença confirmada com sucesso!'
+        : 'Ausência informada com sucesso.'
     );
   };
 
-  // CSV Export
+  // User Profile update
+  const handleSaveUserProfile = (updatedUser: AdminUser) => {
+    setCurrentUser(updatedUser);
+    setAdminUsers((prev) =>
+      prev.map((u) => (u.id === updatedUser.id ? updatedUser : u))
+    );
+  };
+
+  // Administrative users management
+  const handleSaveAdminUser = (user: AdminUser) => {
+    setAdminUsers((prev) => {
+      const exists = prev.some((u) => u.id === user.id);
+      if (exists) {
+        return prev.map((u) => (u.id === user.id ? user : u));
+      }
+      return [...prev, user];
+    });
+    if (user.id === currentUser.id) {
+      setCurrentUser(user);
+    }
+  };
+
+  const handleToggleAdminUserStatus = (userId: string, newStatus?: AdminUserStatus) => {
+    if (userId === currentUser.id) return;
+    setAdminUsers((prev) =>
+      prev.map((u) => {
+        if (u.id !== userId) return u;
+        const targetStatus: AdminUserStatus =
+          newStatus || (u.status === 'active' ? 'disabled' : 'active');
+        return { ...u, status: targetStatus };
+      })
+    );
+    setToastMessage('Status do usuário administrativo alterado com sucesso.');
+  };
+
+  // Logout - Section 10
+  const handleLogout = () => {
+    setIsAuthenticated(false);
+    setToastMessage('Sessão encerrada com sucesso.');
+  };
+
+  // Login - Section 10
+  const handleLogin = (user: AdminUser) => {
+    setCurrentUser(user);
+    setIsAuthenticated(true);
+    setToastMessage(`Bem-vindo(a) ao Rafluo, ${user.name}!`);
+  };
+
+  // Export CSV for active event
   const handleExportCsv = () => {
     const headers = [
       'ID',
-      'Nome',
+      'Nome Principal',
       'Nome Exibicao',
       'Telefone',
       'Grupo',
@@ -269,10 +387,27 @@ export default function App() {
     setToastMessage('Planilha de convidados exportada com sucesso!');
   };
 
+  // 10. If not authenticated, render Login Screen
+  if (!isAuthenticated) {
+    return (
+      <>
+        <Toast message={toastMessage} onClose={() => setToastMessage(null)} />
+        <LoginView
+          onLogin={handleLogin}
+          defaultUser={currentUser}
+          registeredUsers={adminUsers}
+        />
+      </>
+    );
+  }
+
   // If in guest simulation mode, render guest experience
   if (isGuestPreviewMode) {
     const activeGuest =
-      guests.find((g) => g.rsvpCode === previewGuestCode) || activeEventGuests[0] || guests[0] || INITIAL_GUESTS[0];
+      guests.find((g) => g.rsvpCode === previewGuestCode) ||
+      activeEventGuests[0] ||
+      guests[0] ||
+      INITIAL_GUESTS[0];
 
     return (
       <GuestRsvpView
@@ -290,31 +425,72 @@ export default function App() {
       <Toast message={toastMessage} onClose={() => setToastMessage(null)} />
 
       <AdminLayout
+        isMasterView={viewMode === 'master'}
+        currentHubSection={currentHubSection}
+        onSelectHubSection={(hubSection) => {
+          setCurrentHubSection(hubSection);
+          setViewMode('master');
+        }}
         currentSection={currentSection}
         onSelectSection={setCurrentSection}
-        onNewEventClick={handleOpenNewEventModal}
         onOpenPreview={() => handleOpenGuestPreview()}
-        isMasterView={viewMode === 'master'}
         activeEvent={activeEvent}
         events={events}
+        guests={guests}
+        currentUser={currentUser}
         onSelectEvent={handleSelectEvent}
         onExitToMaster={handleExitToMaster}
         onCopyEventLink={() => handleCopyEventLink()}
         hasCopiedLink={hasCopiedHeaderLink}
+        onOpenUserProfile={() => setIsUserProfileModalOpen(true)}
+        onLogout={handleLogout}
       >
         {viewMode === 'master' ? (
-          /* 1. MASTER MANAGEMENT HUB: Global Beaquos Hub with all client events */
-          <MasterEventsHub
-            events={events}
-            guests={guests}
-            onSelectEvent={handleSelectEvent}
-            onNewEvent={handleOpenNewEventModal}
-            onEditEvent={handleOpenEditEventModal}
-            onShowToast={(msg) => setToastMessage(msg)}
-            onOpenPreview={handleOpenGuestPreview}
-          />
+          /* 1. MASTER ADMINISTRATIVE HUB: Dashboard | Eventos | Relatórios | Usuários */
+          <>
+            {currentHubSection === 'dashboard' && (
+              <HubDashboardView
+                currentUser={currentUser}
+                events={events}
+                guests={guests}
+                onSelectEvent={handleSelectEvent}
+                onNavigateToEvents={() => setCurrentHubSection('events')}
+              />
+            )}
+
+            {currentHubSection === 'events' && (
+              <MasterEventsHub
+                events={events}
+                guests={guests}
+                onSelectEvent={handleSelectEvent}
+                onNewEvent={handleOpenNewEventModal}
+                onEditEvent={handleOpenEditEventModal}
+                onShowToast={(msg) => setToastMessage(msg)}
+                onOpenPreview={handleOpenGuestPreview}
+              />
+            )}
+
+            {currentHubSection === 'reports' && (
+              <HubReportsView
+                events={events}
+                guests={guests}
+                onShowToast={(msg) => setToastMessage(msg)}
+                onSelectEvent={handleSelectEvent}
+              />
+            )}
+
+            {currentHubSection === 'users' && (
+              <HubUsersView
+                adminUsers={adminUsers}
+                currentUser={currentUser}
+                onSaveUser={handleSaveAdminUser}
+                onToggleStatus={handleToggleAdminUserStatus}
+                onShowToast={(msg) => setToastMessage(msg)}
+              />
+            )}
+          </>
         ) : (
-          /* 2. CLIENT EVENT WORKSPACE: Deep management of active event */
+          /* 2. EVENT OPERATIONAL WORKSPACE: Deep management of active event */
           <DashboardSkeleton
             currentSection={currentSection}
             onNavigate={setCurrentSection}
@@ -339,7 +515,16 @@ export default function App() {
           />
         )}
 
-        {/* Modals */}
+        {/* User Profile Modal (Dados Cadastrais) */}
+        <UserProfileModal
+          isOpen={isUserProfileModalOpen}
+          onClose={() => setIsUserProfileModalOpen(false)}
+          currentUser={currentUser}
+          onSaveProfile={handleSaveUserProfile}
+          onShowToast={(msg) => setToastMessage(msg)}
+        />
+
+        {/* Existing Event, Guest & Operational Modals */}
         <EventModal
           isOpen={isEventModalOpen}
           onClose={() => {

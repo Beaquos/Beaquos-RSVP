@@ -1,182 +1,192 @@
 import React, { useState, useRef, useEffect } from 'react';
 import {
   Menu,
-  Plus,
-  Calendar,
+  ChevronDown,
+  ArrowLeft,
   Copy,
   Check,
-  ChevronDown,
-  Clock,
-  ArrowLeft,
-  Sparkles,
-  LayoutGrid,
   CheckCircle2,
 } from 'lucide-react';
-import { NavSection } from '../../types/navigation';
-import { EventData } from '../../data/mockData';
+import { HubSection, NavSection } from '../../types/navigation';
+import { EventData, GuestData } from '../../data/mockData';
+import { AdminUser } from '../../types/user';
+import { NotificationsDropdown } from './NotificationsDropdown';
+import { ThemeToggle } from '../common/ThemeToggle';
+import { UserMenu } from '../common/UserMenu';
 
 interface AdminHeaderProps {
   onOpenMobileMenu: () => void;
-  currentSection: NavSection;
-  onNewEventClick?: () => void;
-  isMasterView?: boolean;
+  isMasterView: boolean;
+  currentHubSection?: HubSection;
+  currentSection?: NavSection;
   activeEvent?: EventData;
   events?: EventData[];
+  guests?: GuestData[];
+  currentUser: AdminUser;
   onSelectEvent?: (event: EventData) => void;
   onExitToMaster?: () => void;
   onCopyEventLink?: () => void;
   hasCopiedLink?: boolean;
+  onOpenUserProfile: () => void;
+  onLogout: () => void;
 }
 
-const SECTION_TITLES: Record<NavSection, { title: string; subtitle: string }> = {
-  overview: {
-    title: 'Visão Geral do Evento',
-    subtitle: 'Painel executivo de confirmações e métricas do RSVP',
+const HUB_TITLES: Record<HubSection, { title: string }> = {
+  dashboard: {
+    title: 'Dashboard',
   },
   events: {
-    title: 'Gerenciamento de Eventos',
-    subtitle: 'Crie, edite e configure prazos e dados do evento',
+    title: 'Eventos',
+  },
+  reports: {
+    title: 'Relatórios',
+  },
+  users: {
+    title: 'Usuários',
+  },
+};
+
+const EVENT_SECTION_TITLES: Record<NavSection, { title: string }> = {
+  overview: {
+    title: 'Dashboard',
+  },
+  events: {
+    title: 'Dados do Evento',
   },
   'form-builder': {
-    title: 'Construtor de Formulário RSVP',
-    subtitle: 'Estruturação de perguntas personalizadas e regras condicionais',
+    title: 'Formulários',
   },
   guests: {
-    title: 'Gestão de Convidados',
-    subtitle: 'Importação CSV, emissão de links exclusivos e status',
+    title: 'Convidados',
   },
   managers: {
-    title: 'Responsáveis & Acessos',
-    subtitle: 'Controle de acesso por e-mail e janela temporal permitida',
+    title: 'Responsáveis',
   },
   analytics: {
-    title: 'Relatórios & Exportação',
-    subtitle: 'Exportação em lote de dados consolidados e respostas',
+    title: 'Relatórios',
   },
   settings: {
-    title: 'Configurações do Sistema',
-    subtitle: 'Identidade visual Beaquos, domínios e parâmetros gerais',
+    title: 'Configurações',
   },
 };
 
 export const AdminHeader: React.FC<AdminHeaderProps> = ({
   onOpenMobileMenu,
-  currentSection,
-  onNewEventClick,
-  isMasterView = false,
+  isMasterView,
+  currentHubSection = 'dashboard',
+  currentSection = 'overview',
   activeEvent,
   events = [],
+  guests = [],
+  currentUser,
   onSelectEvent,
   onExitToMaster,
   onCopyEventLink,
   hasCopiedLink = false,
+  onOpenUserProfile,
+  onLogout,
 }) => {
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
+  const [isEventDropdownOpen, setIsEventDropdownOpen] = useState(false);
+  const eventDropdownRef = useRef<HTMLDivElement>(null);
 
-  const currentMeta = SECTION_TITLES[currentSection] || SECTION_TITLES.overview;
-
-  // Close dropdown on click outside
+  // Close menus on outside click
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setIsDropdownOpen(false);
+      if (
+        eventDropdownRef.current &&
+        !eventDropdownRef.current.contains(event.target as Node)
+      ) {
+        setIsEventDropdownOpen(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  const hubMeta = HUB_TITLES[currentHubSection] || HUB_TITLES.dashboard;
+  const eventMeta = EVENT_SECTION_TITLES[currentSection] || EVENT_SECTION_TITLES.overview;
+
   return (
     <header
       id="admin-top-header"
-      className="sticky top-0 z-30 bg-[#FEFDF3]/95 backdrop-blur-md border-b border-[#231F20]/10 px-4 sm:px-6 py-3 transition-all"
+      className="sticky top-0 z-30 bg-[#FAF6EE]/95 dark:bg-[#180D20]/95 backdrop-blur-md border-b border-[#24152F]/10 dark:border-[#3F2553]/60 px-4 sm:px-6 py-3 transition-colors"
     >
       <div className="flex items-center justify-between gap-3 sm:gap-4">
-        {/* Left Side: Mobile Menu Button + Navigation / Breadcrumb */}
+        {/* Left Side: Mobile Menu Button + Navigation / Breadcrumb Context */}
         <div className="flex items-center space-x-3 min-w-0">
           <button
+            type="button"
             id="btn-open-sidebar-mobile"
             onClick={onOpenMobileMenu}
-            className="lg:hidden p-2 rounded-xl bg-[#1B3024]/5 hover:bg-[#1B3024]/10 text-[#231F20] border border-[#1B3024]/10 shadow-2xs transition-colors cursor-pointer"
+            className="lg:hidden p-2 rounded-xl bg-white dark:bg-[#24152F] border border-[#24152F]/15 dark:border-[#3F2553] text-[#24152F] dark:text-[#F7F1E5] shadow-2xs hover:bg-[#FAF6EE] dark:hover:bg-[#2E1B3C] transition-colors cursor-pointer"
             aria-label="Abrir navegação"
           >
-            <Menu className="w-5 h-5 text-[#1B3024]" />
+            <Menu className="w-5 h-5" />
           </button>
 
           <div className="min-w-0">
             {isMasterView ? (
-              <div className="flex items-center gap-2.5">
-                <h1 className="text-base sm:text-lg font-bold text-[#231F20] tracking-tight">
-                  Painel de Eventos
+              /* Hub View Header - Apenas o nome principal do menu, sem subtítulo */
+              <div className="flex items-center">
+                <h1 className="text-base sm:text-lg font-bold text-[#24152F] dark:text-[#F7F1E5] tracking-tight">
+                  {hubMeta.title}
                 </h1>
-                <span className="text-[11px] bg-[#1B3024]/10 text-[#1B3024] font-bold px-2 py-0.5 rounded-full">
-                  {events.length} eventos
-                </span>
               </div>
             ) : (
+              /* Inside Specific Event Header */
               <div className="space-y-0.5">
-                {/* Breadcrumb with explicit back button */}
-                <div className="flex items-center space-x-1.5 text-[11px] font-medium text-[#231F20]/60">
+                <div className="flex items-center space-x-1.5 text-[11px] font-medium text-[#24152F]/60 dark:text-[#D2C4DC]/70">
                   {onExitToMaster && (
                     <button
                       type="button"
                       id="btn-breadcrumb-exit-master"
                       onClick={onExitToMaster}
-                      className="text-[#1B3024] hover:underline font-semibold flex items-center gap-1.5 cursor-pointer"
+                      className="text-[#24152F] dark:text-[#F7F1E5] hover:underline font-semibold flex items-center gap-1 cursor-pointer"
                     >
-                      <div className="w-4 h-4 rounded bg-[#1B3024]/10 flex items-center justify-center text-[#1B3024]">
-                        <ArrowLeft className="w-2.5 h-2.5" />
-                      </div>
-                      <span>Painel Geral</span>
+                      <ArrowLeft className="w-3 h-3" />
+                      <span>Hub Geral</span>
                     </button>
                   )}
                   <span>/</span>
-                  <span className="text-[#231F20]/80 truncate">{currentMeta.title}</span>
+                  <span className="text-[#24152F]/80 dark:text-[#D2C4DC] truncate">{eventMeta.title}</span>
                 </div>
 
-                {/* Event Dropdown Selector */}
-                <div className="relative" ref={dropdownRef}>
+                {/* Event Selector Dropdown */}
+                <div className="relative" ref={eventDropdownRef}>
                   <button
                     type="button"
                     id="btn-event-switcher-header"
-                    onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                    className="flex items-center gap-2 text-base sm:text-lg font-bold text-[#231F20] tracking-tight hover:text-[#1B3024] transition-colors cursor-pointer text-left group"
-                    title="Clique para alternar de evento"
+                    onClick={() => setIsEventDropdownOpen(!isEventDropdownOpen)}
+                    className="flex items-center gap-1.5 text-base sm:text-lg font-bold text-[#24152F] dark:text-[#F7F1E5] tracking-tight hover:text-[#3F2553] dark:hover:text-[#DFFF5F] transition-colors cursor-pointer text-left"
+                    title="Alternar evento"
                   >
-                    <span className="truncate max-w-[200px] sm:max-w-xs md:max-w-md">
-                      {activeEvent?.name || currentMeta.title}
+                    <span className="truncate max-w-[180px] sm:max-w-xs md:max-w-md">
+                      {activeEvent?.name || eventMeta.title}
                     </span>
-                    <div className="w-5 h-5 rounded-md bg-[#1B3024]/10 flex items-center justify-center flex-shrink-0 group-hover:bg-[#1B3024]/20 transition-colors">
-                      <ChevronDown className="w-3.5 h-3.5 text-[#1B3024]" />
-                    </div>
+                    <ChevronDown className="w-4 h-4 text-[#24152F]/60 dark:text-[#D2C4DC]/60" />
                   </button>
 
-                  {/* Dropdown Menu */}
-                  {isDropdownOpen && (
-                    <div className="absolute left-0 mt-2 w-72 sm:w-80 rounded-xl bg-white border border-[#231F20]/15 shadow-xl py-2 z-50 animate-in fade-in zoom-in-95 duration-150">
+                  {isEventDropdownOpen && (
+                    <div className="absolute left-0 mt-2 w-72 sm:w-80 max-w-[calc(100vw-2rem)] rounded-2xl bg-white dark:bg-[#1E1128] border border-[#24152F]/15 dark:border-[#3F2553] shadow-xl py-2 z-50">
                       {onExitToMaster && (
                         <button
                           type="button"
-                          id="dropdown-item-exit-to-master"
                           onClick={() => {
-                            setIsDropdownOpen(false);
+                            setIsEventDropdownOpen(false);
                             onExitToMaster();
                           }}
-                          className="w-full text-left px-4 py-2.5 text-xs font-bold text-[#1B3024] hover:bg-[#FEFDF3] flex items-center gap-2.5 border-b border-[#231F20]/10 cursor-pointer"
+                          className="w-full text-left px-4 py-2.5 text-xs font-bold text-[#24152F] dark:text-[#F7F1E5] hover:bg-[#FAF6EE] dark:hover:bg-[#2E1B3C] flex items-center gap-2 border-b border-[#24152F]/10 dark:border-[#3F2553]/60 cursor-pointer"
                         >
-                          <div className="w-6 h-6 rounded-md bg-[#DFFFAE] flex items-center justify-center text-[#1B3024]">
-                            <LayoutGrid className="w-3.5 h-3.5" />
-                          </div>
-                          <span>← Sair para o Painel Geral (Todos os Eventos)</span>
+                          <ArrowLeft className="w-3.5 h-3.5 text-[#24152F] dark:text-[#DFFF5F]" />
+                          <span>Voltar ao Hub Geral</span>
                         </button>
                       )}
 
-                      <div className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-[#231F20]/40">
+                      <div className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-[#24152F]/40 dark:text-[#D2C4DC]/50">
                         Trocar para outro Evento:
                       </div>
 
-                      <div className="max-h-60 overflow-y-auto divide-y divide-[#231F20]/5">
+                      <div className="max-h-60 overflow-y-auto divide-y divide-[#24152F]/5 dark:divide-[#3F2553]/40">
                         {events.map((ev) => {
                           const isCurrent = ev.id === activeEvent?.id;
                           return (
@@ -184,25 +194,21 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
                               key={ev.id}
                               type="button"
                               onClick={() => {
-                                setIsDropdownOpen(false);
+                                setIsEventDropdownOpen(false);
                                 if (onSelectEvent) onSelectEvent(ev);
                               }}
                               className={`w-full text-left px-4 py-2.5 text-xs transition-colors flex items-center justify-between cursor-pointer ${
                                 isCurrent
-                                  ? 'bg-[#1B3024]/5 text-[#1B3024] font-bold'
-                                  : 'text-[#231F20] hover:bg-[#FEFDF3]'
+                                  ? 'bg-[#FAF6EE] dark:bg-[#2E1B3C] text-[#24152F] dark:text-[#DFFF5F] font-bold'
+                                  : 'text-[#24152F] dark:text-[#F7F1E5] hover:bg-[#FAF6EE]/50 dark:hover:bg-[#2E1B3C]/50'
                               }`}
                             >
                               <div className="truncate pr-2">
                                 <p className="truncate font-semibold">{ev.name}</p>
-                                <p className="text-[10px] text-[#231F20]/50 truncate">
-                                  {ev.type} • {ev.date}
-                                </p>
+                                <p className="text-[10px] text-[#24152F]/50 dark:text-[#D2C4DC]/50 truncate">{ev.type}</p>
                               </div>
                               {isCurrent && (
-                                <div className="w-5 h-5 rounded-full bg-[#DFFFAE] flex items-center justify-center text-[#1B3024]">
-                                  <CheckCircle2 className="w-3.5 h-3.5" />
-                                </div>
+                                <CheckCircle2 className="w-4 h-4 text-[#24152F] dark:text-[#DFFF5F] flex-shrink-0" />
                               )}
                             </button>
                           );
@@ -216,72 +222,42 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
           </div>
         </div>
 
-        {/* Right Side: Quick Action Buttons */}
+        {/* Right Side: Quick Action (Event Only) + Notifications Icon + ThemeToggle + UserMenu */}
         <div className="flex items-center space-x-2 sm:space-x-2.5 flex-shrink-0">
-          {!isMasterView && activeEvent && (
-            <>
-              {/* Prominent "Copiar Link do Evento" Button */}
-              {onCopyEventLink && (
-                <button
-                  type="button"
-                  id="btn-copy-event-link-header"
-                  onClick={onCopyEventLink}
-                  title="Copiar link de RSVP deste evento"
-                  className={`flex items-center gap-2 px-3 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all shadow-xs cursor-pointer ${
-                    hasCopiedLink
-                      ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
-                      : 'bg-[#DFFFAE] hover:bg-[#DFFFAE]/90 text-[#1B3024] border border-[#1B3024]/20'
-                  }`}
-                >
-                  {hasCopiedLink ? (
-                    <>
-                      <div className="w-5 h-5 rounded-md bg-emerald-200 text-emerald-800 flex items-center justify-center flex-shrink-0">
-                        <Check className="w-3 h-3" />
-                      </div>
-                      <span>Link Copiado!</span>
-                    </>
-                  ) : (
-                    <>
-                      <div className="w-5 h-5 rounded-md bg-[#1B3024]/10 text-[#1B3024] flex items-center justify-center flex-shrink-0">
-                        <Copy className="w-3 h-3" />
-                      </div>
-                      <span className="hidden sm:inline">Copiar Link do Evento</span>
-                      <span className="sm:hidden">Copiar Link</span>
-                    </>
-                  )}
-                </button>
-              )}
-
-              {/* Explicit "Sair para o Painel Geral" Button */}
-              {onExitToMaster && (
-                <button
-                  type="button"
-                  id="btn-exit-to-master-header"
-                  onClick={onExitToMaster}
-                  title="Sair deste evento e voltar para a lista de todos os eventos"
-                  className="hidden md:flex items-center gap-2 px-3 py-2 rounded-xl border border-[#231F20]/20 hover:border-[#1B3024] text-[#231F20] hover:bg-[#231F20]/5 text-xs font-semibold transition-colors cursor-pointer group shadow-2xs"
-                >
-                  <div className="w-5 h-5 rounded-md bg-[#231F20]/5 group-hover:bg-[#1B3024]/10 text-[#1B3024] flex items-center justify-center flex-shrink-0 transition-colors">
-                    <ArrowLeft className="w-3 h-3" />
-                  </div>
-                  <span>Sair do Evento</span>
-                </button>
-              )}
-            </>
+          {/* Quick link button when inside an event */}
+          {!isMasterView && activeEvent && onCopyEventLink && (
+            <button
+              type="button"
+              id="btn-copy-event-link-header"
+              onClick={onCopyEventLink}
+              title="Copiar link deste evento"
+              className={`hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all shadow-2xs cursor-pointer ${
+                hasCopiedLink
+                  ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
+                  : 'bg-[#DFFF5F] hover:bg-[#CEF04A] text-[#180D20] border border-[#DFFF5F]'
+              }`}
+            >
+              {hasCopiedLink ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+              <span>{hasCopiedLink ? 'Copiado!' : 'Copiar Link'}</span>
+            </button>
           )}
 
-          {/* New Event Button */}
-          <button
-            id="btn-new-event-header"
-            onClick={onNewEventClick}
-            className="flex items-center gap-2 px-3.5 py-1.5 sm:py-2 rounded-xl bg-[#1B3024] hover:bg-[#231F20] text-[#FEFDF3] text-xs font-semibold shadow-xs transition-all active:scale-95 cursor-pointer group"
-          >
-            <div className="w-5 h-5 rounded-md bg-[#FEFDF3]/15 text-[#DFFFAE] flex items-center justify-center flex-shrink-0 group-hover:bg-[#DFFFAE] group-hover:text-[#1B3024] transition-colors">
-              <Plus className="w-3.5 h-3.5" />
-            </div>
-            <span className="hidden sm:inline">Novo Evento</span>
-            <span className="sm:hidden">Novo</span>
-          </button>
+          {/* 7. Notification Icon */}
+          <NotificationsDropdown
+            guests={guests}
+            events={events}
+            onSelectEvent={onSelectEvent}
+          />
+
+          {/* 1. Botão de alternar tema (ícone de sol/lua) no header */}
+          <ThemeToggle />
+
+          {/* 2. Menu dropdown do usuário (ao clicar no avatar) */}
+          <UserMenu
+            currentUser={currentUser}
+            onOpenProfile={onOpenUserProfile}
+            onLogout={onLogout}
+          />
         </div>
       </div>
     </header>

@@ -2,39 +2,70 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Sidebar } from './Sidebar';
 import { AdminHeader } from './AdminHeader';
-import { NavSection } from '../../types/navigation';
-import { EventData } from '../../data/mockData';
+import { Footer } from './Footer';
+import { HubSection, NavSection } from '../../types/navigation';
+import { EventData, GuestData } from '../../data/mockData';
+import { AdminUser } from '../../types/user';
 
 interface AdminLayoutProps {
   children: React.ReactNode;
-  currentSection: NavSection;
-  onSelectSection: (section: NavSection) => void;
-  onNewEventClick?: () => void;
-  onOpenPreview?: () => void;
   isMasterView?: boolean;
+  currentHubSection?: HubSection;
+  onSelectHubSection?: (section: HubSection) => void;
+  currentSection?: NavSection;
+  onSelectSection?: (section: NavSection) => void;
+  onOpenPreview?: () => void;
   activeEvent?: EventData;
   events?: EventData[];
+  guests?: GuestData[];
+  currentUser: AdminUser;
   onSelectEvent?: (event: EventData) => void;
   onExitToMaster?: () => void;
   onCopyEventLink?: () => void;
   hasCopiedLink?: boolean;
+  onOpenUserProfile: () => void;
+  onLogout: () => void;
 }
 
 export const AdminLayout: React.FC<AdminLayoutProps> = ({
   children,
-  currentSection,
+  isMasterView = true,
+  currentHubSection = 'dashboard',
+  onSelectHubSection,
+  currentSection = 'overview',
   onSelectSection,
-  onNewEventClick,
   onOpenPreview,
-  isMasterView = false,
   activeEvent,
   events = [],
+  guests = [],
+  currentUser,
   onSelectEvent,
   onExitToMaster,
   onCopyEventLink,
   hasCopiedLink = false,
+  onOpenUserProfile,
+  onLogout,
 }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem('korza_sidebar_collapsed') === 'true';
+    } catch {
+      return false;
+    }
+  });
+
+  const handleToggleSidebar = useCallback(() => {
+    setIsSidebarCollapsed((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem('korza_sidebar_collapsed', String(next));
+      } catch {
+        // ignore
+      }
+      return next;
+    });
+  }, []);
 
   const handleCloseMobileMenu = useCallback(() => {
     setIsMobileMenuOpen(false);
@@ -52,26 +83,41 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
   }, [isMobileMenuOpen, handleCloseMobileMenu]);
 
   return (
-    <div id="admin-main-container" className="min-h-screen bg-[#FEFDF3] text-[#231F20] flex overflow-x-hidden font-sans">
+    <div
+      id="admin-main-container"
+      className="min-h-screen bg-[#FAF6EE] dark:bg-[#120919] text-[#24152F] dark:text-[#F7F1E5] flex overflow-x-hidden font-sans transition-colors duration-200"
+    >
       {/* 1. Desktop Persistent Sidebar */}
-      <aside aria-label="Navegação Lateral Principal" className="hidden lg:block lg:flex-shrink-0 lg:w-72 fixed inset-y-0 left-0 z-40">
+      <aside
+        aria-label="Navegação Lateral Principal"
+        className={`hidden lg:block lg:flex-shrink-0 fixed inset-y-0 left-0 z-40 transition-all duration-300 ease-in-out ${
+          isSidebarCollapsed ? 'lg:w-20' : 'lg:w-72'
+        }`}
+      >
         <Sidebar
+          isMasterView={isMasterView}
+          currentHubSection={currentHubSection}
+          onSelectHubSection={onSelectHubSection}
           currentSection={currentSection}
           onSelectSection={onSelectSection}
           onOpenPreview={onOpenPreview}
           eventName={activeEvent?.name}
           rsvpDeadline={activeEvent?.rsvpDeadline}
-          isMasterView={isMasterView}
           onExitToMaster={onExitToMaster}
-          onCopyEventLink={onCopyEventLink}
-          hasCopiedLink={hasCopiedLink}
+          isCollapsed={isSidebarCollapsed}
+          onToggleCollapse={handleToggleSidebar}
         />
       </aside>
 
       {/* 2. Mobile Drawer Sidebar (with motion animations) */}
       <AnimatePresence>
         {isMobileMenuOpen && (
-          <div className="fixed inset-0 z-50 lg:hidden flex" role="dialog" aria-modal="true" aria-label="Menu de Navegação Móvel">
+          <div
+            className="fixed inset-0 z-50 lg:hidden flex"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Menu de Navegação Móvel"
+          >
             {/* Backdrop */}
             <motion.div
               initial={{ opacity: 0 }}
@@ -79,7 +125,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
               exit={{ opacity: 0 }}
               transition={{ duration: 0.2 }}
               onClick={handleCloseMobileMenu}
-              className="fixed inset-0 bg-[#231F20]/60 backdrop-blur-xs cursor-pointer"
+              className="fixed inset-0 bg-[#24152F]/70 backdrop-blur-xs cursor-pointer"
               aria-hidden="true"
             />
 
@@ -89,22 +135,26 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
               animate={{ x: 0 }}
               exit={{ x: '-100%' }}
               transition={{ type: 'spring', damping: 25, stiffness: 220 }}
-              className="relative flex-1 flex flex-col max-w-xs w-full bg-[#1B3024] shadow-2xl z-10"
+              className="relative flex-1 flex flex-col max-w-xs w-full bg-[#24152F] shadow-2xl z-10"
             >
               <Sidebar
+                isMasterView={isMasterView}
+                currentHubSection={currentHubSection}
+                onSelectHubSection={(sec) => {
+                  if (onSelectHubSection) onSelectHubSection(sec);
+                  handleCloseMobileMenu();
+                }}
                 currentSection={currentSection}
                 onSelectSection={(sec) => {
-                  onSelectSection(sec);
+                  if (onSelectSection) onSelectSection(sec);
                   handleCloseMobileMenu();
                 }}
                 onCloseMobile={handleCloseMobileMenu}
                 onOpenPreview={onOpenPreview}
                 eventName={activeEvent?.name}
                 rsvpDeadline={activeEvent?.rsvpDeadline}
-                isMasterView={isMasterView}
                 onExitToMaster={onExitToMaster}
-                onCopyEventLink={onCopyEventLink}
-                hasCopiedLink={hasCopiedLink}
+                isCollapsed={false}
               />
             </motion.div>
           </div>
@@ -112,25 +162,41 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
       </AnimatePresence>
 
       {/* 3. Main Content Workspace */}
-      <div className="flex-1 lg:pl-72 flex flex-col min-w-0">
-        {/* Sticky Top Header */}
-        <AdminHeader
-          onOpenMobileMenu={() => setIsMobileMenuOpen(true)}
-          currentSection={currentSection}
-          onNewEventClick={onNewEventClick}
-          isMasterView={isMasterView}
-          activeEvent={activeEvent}
-          events={events}
-          onSelectEvent={onSelectEvent}
-          onExitToMaster={onExitToMaster}
-          onCopyEventLink={onCopyEventLink}
-          hasCopiedLink={hasCopiedLink}
-        />
+      <div
+        className={`flex-1 flex flex-col min-w-0 justify-between transition-all duration-300 ease-in-out ${
+          isSidebarCollapsed ? 'lg:pl-20' : 'lg:pl-72'
+        }`}
+      >
+        <div className="flex-1 flex flex-col min-w-0">
+          {/* Sticky Top Header */}
+          <AdminHeader
+            onOpenMobileMenu={() => setIsMobileMenuOpen(true)}
+            isMasterView={isMasterView}
+            currentHubSection={currentHubSection}
+            currentSection={currentSection}
+            activeEvent={activeEvent}
+            events={events}
+            guests={guests}
+            currentUser={currentUser}
+            onSelectEvent={onSelectEvent}
+            onExitToMaster={onExitToMaster}
+            onCopyEventLink={onCopyEventLink}
+            hasCopiedLink={hasCopiedLink}
+            onOpenUserProfile={onOpenUserProfile}
+            onLogout={onLogout}
+          />
 
-        {/* Dynamic Body Content Container */}
-        <main id="admin-main-content" className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto">
-          {children}
-        </main>
+          {/* Dynamic Body Content Container */}
+          <main
+            id="admin-main-content"
+            className="flex-1 p-3 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto min-w-0"
+          >
+            {children}
+          </main>
+        </div>
+
+        {/* 16. Discreto rodapé do sistema */}
+        <Footer />
       </div>
     </div>
   );

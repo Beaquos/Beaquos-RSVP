@@ -1,3 +1,5 @@
+export type HubSection = 'dashboard' | 'events' | 'reports' | 'users';
+
 export type NavSection =
   | 'overview'
   | 'events'

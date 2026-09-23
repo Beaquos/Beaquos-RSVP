@@ -13,7 +13,6 @@ export const ManagerModal: React.FC<ManagerModalProps> = ({
   isOpen,
   onClose,
   onSave,
-  eventName,
 }) => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -70,120 +69,116 @@ export const ManagerModal: React.FC<ManagerModalProps> = ({
           onClose();
         }
       }}
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#231F20]/60 backdrop-blur-xs overflow-y-auto"
+      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-[#24152F]/70 backdrop-blur-xs overflow-y-auto"
     >
-      <div className="relative w-full max-w-lg bg-[#FEFDF3] rounded-2xl border border-[#231F20]/10 shadow-2xl overflow-hidden my-8">
-        <div className="px-6 py-4 bg-[#1B3024] text-[#FEFDF3] flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            <UserCheck className="w-5 h-5 text-[#DFFFAE]" />
-            <h3 className="font-bold text-base">Cadastrar Responsável pelo Evento</h3>
+      <div className="relative w-full max-w-lg bg-white rounded-2xl border border-[#24152F]/15 shadow-2xl overflow-hidden my-auto max-h-[92vh] flex flex-col">
+        <div className="px-4 sm:px-6 py-3.5 sm:py-4 bg-[#24152F] text-[#F7F1E5] flex items-center justify-between border-b border-[#3F2553] flex-shrink-0">
+          <div className="flex items-center space-x-2.5 min-w-0 pr-2">
+            <div className="w-8 h-8 rounded-lg bg-[#DFFF5F] text-[#180D20] flex items-center justify-center flex-shrink-0">
+              <UserCheck className="w-4 h-4 text-[#180D20]" />
+            </div>
+            <div className="min-w-0">
+              <h3 className="font-bold text-sm sm:text-base text-[#F7F1E5] truncate">Cadastrar Responsável pelo Evento</h3>
+              <p className="text-[10px] sm:text-[11px] text-[#D2C4DC] truncate">Permissão de consulta de convidados e respostas</p>
+            </div>
           </div>
           <button
             type="button"
             id="btn-close-manager-modal"
             onClick={onClose}
             aria-label="Fechar modal"
-            className="p-1 rounded-lg hover:bg-[#FEFDF3]/15 text-[#FEFDF3] cursor-pointer"
+            className="p-1.5 rounded-lg hover:bg-white/10 text-[#F7F1E5] cursor-pointer transition-colors flex-shrink-0"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-4 text-xs text-[#231F20]">
-          <div className="p-3 rounded-lg bg-[#DFFFAE]/20 border border-[#DFFFAE] text-[#1B3024] text-[11px] space-y-1">
-            <p className="font-bold flex items-center gap-1">
-              <Clock className="w-3.5 h-3.5" /> Acesso Sem Senha por E-mail
+        <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-4 text-xs text-[#24152F] overflow-y-auto flex-1">
+          <div className="p-3.5 rounded-xl bg-[#FAF6EE] border border-[#24152F]/15 text-[#24152F] text-[11px] space-y-1">
+            <p className="font-bold flex items-center gap-1.5 text-xs text-[#24152F]">
+              <Clock className="w-3.5 h-3.5 text-[#24152F]" /> Acesso Sem Senha por E-mail
             </p>
-            <p>
+            <p className="text-[#24152F]/70">
               O responsável se identificará pelo e-mail cadastrado e terá acesso de visualização apenas
-              durante o período configurado abaixo (independente do prazo de RSVP).
+              durante o período configurado abaixo (independente do prazo de confirmação dos convidados).
             </p>
           </div>
 
           <div>
-            <label className="block font-semibold mb-1">Evento Vinculado</label>
-            <input
-              type="text"
-              disabled
-              value={eventName}
-              className="w-full px-3 py-2 rounded-lg border border-[#231F20]/15 bg-gray-100 font-medium text-[#231F20]/70"
-            />
-          </div>
-
-          <div>
-            <label className="block font-semibold mb-1">Nome do Responsável *</label>
+            <label className="block font-semibold mb-1 text-[#24152F]">Nome do Responsável *</label>
             <input
               type="text"
               required
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full px-3 py-2 rounded-lg border border-[#231F20]/20 bg-white"
-              placeholder="Ex: Lucas Ferreira (Noivo)"
+              className="w-full px-3 py-2 rounded-lg border border-[#24152F]/20 bg-[#FAF6EE] focus:outline-none focus:ring-1 focus:ring-[#24152F]"
+              placeholder="Ex: Cerimonialista Roberta / Noivo Marcos"
             />
           </div>
 
           <div>
-            <label className="block font-semibold mb-1">E-mail de Acesso *</label>
+            <label className="block font-semibold mb-1 text-[#24152F]">E-mail de Identificação *</label>
             <input
               type="email"
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-3 py-2 rounded-lg border border-[#231F20]/20 bg-white"
-              placeholder="lucas.noivo@email.com"
+              className="w-full px-3 py-2 rounded-lg border border-[#24152F]/20 bg-[#FAF6EE] focus:outline-none focus:ring-1 focus:ring-[#24152F]"
+              placeholder="roberta@cerimonial.com"
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className="block font-semibold mb-1">Início do Acesso *</label>
+              <label className="block font-semibold mb-1 text-[#24152F]">Início do Acesso</label>
               <input
                 type="date"
                 required
                 value={accessStart}
                 onChange={(e) => setAccessStart(e.target.value)}
-                className="w-full px-3 py-2 rounded-lg border border-[#231F20]/20 bg-white"
+                className="w-full px-3 py-2 rounded-lg border border-[#24152F]/20 bg-[#FAF6EE] focus:outline-none focus:ring-1 focus:ring-[#24152F]"
               />
             </div>
+
             <div>
-              <label className="block font-semibold mb-1">Fim do Acesso *</label>
+              <label className="block font-semibold mb-1 text-[#24152F]">Término do Acesso</label>
               <input
                 type="date"
                 required
                 value={accessEnd}
                 onChange={(e) => setAccessEnd(e.target.value)}
-                className="w-full px-3 py-2 rounded-lg border border-[#231F20]/20 bg-white"
+                className="w-full px-3 py-2 rounded-lg border border-[#24152F]/20 bg-[#FAF6EE] focus:outline-none focus:ring-1 focus:ring-[#24152F]"
               />
             </div>
           </div>
 
           <div>
-            <label className="block font-semibold mb-1">Status do Acesso</label>
+            <label className="block font-semibold mb-1 text-[#24152F]">Status do Acesso</label>
             <select
               value={status}
               onChange={(e) => setStatus(e.target.value as any)}
-              className="w-full px-3 py-2 rounded-lg border border-[#231F20]/20 bg-white"
+              className="w-full px-3 py-2 rounded-lg border border-[#24152F]/20 bg-[#FAF6EE] focus:outline-none focus:ring-1 focus:ring-[#24152F]"
             >
-              <option value="active">Ativo (Permitir acesso)</option>
-              <option value="inactive">Inativo (Bloquear temporariamente)</option>
+              <option value="active">Ativo (Pode acessar)</option>
+              <option value="inactive">Inativo (Acesso bloqueado)</option>
             </select>
           </div>
 
-          <div className="flex items-center justify-end space-x-2 pt-3 border-t border-[#231F20]/10">
+          <div className="flex flex-col-reverse sm:flex-row items-center justify-end gap-2.5 pt-3 border-t border-[#24152F]/10">
             <button
               type="button"
               id="btn-cancel-manager-modal"
               onClick={onClose}
-              className="px-4 py-2 rounded-lg border border-[#231F20]/20 text-xs font-semibold hover:bg-[#231F20]/5 cursor-pointer"
+              className="w-full sm:w-auto px-4 py-2.5 rounded-xl border border-[#24152F]/20 text-xs font-semibold text-[#24152F] hover:bg-[#F7F1E5] cursor-pointer text-center"
             >
               Cancelar
             </button>
             <button
               type="submit"
               id="btn-submit-manager-modal"
-              className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-[#1B3024] hover:bg-[#231F20] text-[#FEFDF3] text-xs font-semibold cursor-pointer shadow-sm"
+              className="w-full sm:w-auto flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-[#24152F] hover:bg-[#180D20] text-[#F7F1E5] text-xs font-semibold shadow-sm cursor-pointer border border-[#3F2553] text-center"
             >
-              <Check className="w-3.5 h-3.5 text-[#DFFFAE]" /> Salvar Responsável
+              <Check className="w-3.5 h-3.5 text-[#DFFF5F]" /> Salvar Responsável
             </button>
           </div>
         </form>

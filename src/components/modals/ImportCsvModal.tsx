@@ -58,7 +58,7 @@ export const ImportCsvModal: React.FC<ImportCsvModalProps> = ({
   if (!isOpen) return null;
 
   const handleLoadSample = () => {
-    setFileName('lista_convidados_beaquos_exemplo.csv');
+    setFileName('lista_convidados_rafluo_exemplo.csv');
     setRows(SAMPLE_CSV_ROWS);
   };
 
@@ -74,7 +74,6 @@ export const ImportCsvModal: React.FC<ImportCsvModalProps> = ({
       const text = event.target?.result as string;
       const lines = text.split(/\r?\n/).filter((l) => l.trim().length > 0);
 
-      // Simple parsing demonstration
       const parsedRows: CsvRowPreview[] = [];
       const dataLines = lines.length > 1 ? lines.slice(1) : lines;
 
@@ -104,7 +103,7 @@ export const ImportCsvModal: React.FC<ImportCsvModalProps> = ({
     reader.readAsText(file);
   };
 
-  const handleConfirm = () => {
+  const handleConfirmImport = () => {
     const newGuests: GuestData[] = rows
       .filter((r) => r.isValid)
       .map((r, idx) => ({
@@ -116,8 +115,8 @@ export const ImportCsvModal: React.FC<ImportCsvModalProps> = ({
         email: '',
         group: r.group,
         maxGuests: r.maxGuests,
-        rsvpCode: 'BEA-' + Math.random().toString(36).substring(2, 7).toUpperCase(),
-        notes: 'Importado via arquivo CSV ' + fileName,
+        rsvpCode: 'RAF-' + Math.random().toString(36).substring(2, 7).toUpperCase(),
+        notes: 'Importado via CSV',
         status: 'pending',
         respondedAt: null,
         companionCount: 0,
@@ -131,7 +130,7 @@ export const ImportCsvModal: React.FC<ImportCsvModalProps> = ({
 
   return (
     <div
-      id="modal-backdrop-csv"
+      id="modal-backdrop-import-csv"
       role="dialog"
       aria-modal="true"
       onClick={(e) => {
@@ -139,85 +138,105 @@ export const ImportCsvModal: React.FC<ImportCsvModalProps> = ({
           onClose();
         }
       }}
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#231F20]/60 backdrop-blur-xs overflow-y-auto"
+      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-[#24152F]/70 backdrop-blur-xs overflow-y-auto"
     >
-      <div className="relative w-full max-w-2xl bg-[#FEFDF3] rounded-2xl border border-[#231F20]/10 shadow-2xl overflow-hidden my-8">
-        <div className="px-6 py-4 bg-[#1B3024] text-[#FEFDF3] flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            <Upload className="w-5 h-5 text-[#DFFFAE]" />
-            <h3 className="font-bold text-base">Importação de Convidados (CSV)</h3>
+      <div className="relative w-full max-w-xl bg-white rounded-2xl border border-[#24152F]/15 shadow-2xl overflow-hidden my-auto max-h-[92vh] flex flex-col">
+        <div className="px-4 sm:px-6 py-3.5 sm:py-4 bg-[#24152F] text-[#F7F1E5] flex items-center justify-between border-b border-[#3F2553] flex-shrink-0">
+          <div className="flex items-center space-x-2.5 min-w-0 pr-2">
+            <div className="w-8 h-8 rounded-lg bg-[#DFFF5F] text-[#180D20] flex items-center justify-center flex-shrink-0">
+              <Upload className="w-4 h-4 text-[#180D20]" />
+            </div>
+            <div className="min-w-0">
+              <h3 className="font-bold text-sm sm:text-base text-[#F7F1E5] truncate">Importar Convidados via Planilha CSV</h3>
+              <p className="text-[10px] sm:text-[11px] text-[#D2C4DC] truncate">Importação em lote de contatos e cotas</p>
+            </div>
           </div>
           <button
             type="button"
-            id="btn-close-csv-modal"
+            id="btn-close-import-modal"
             onClick={onClose}
             aria-label="Fechar modal"
-            className="p-1 rounded-lg hover:bg-[#FEFDF3]/15 text-[#FEFDF3] cursor-pointer"
+            className="p-1.5 rounded-lg hover:bg-white/10 text-[#F7F1E5] cursor-pointer transition-colors flex-shrink-0"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        <div className="p-6 space-y-4 text-xs text-[#231F20]">
-          {/* File selector or sample */}
-          <div className="p-5 border-2 border-dashed border-[#1B3024]/30 rounded-xl bg-white text-center space-y-3">
-            <FileSpreadsheet className="w-8 h-8 text-[#1B3024] mx-auto" />
+        <div className="p-4 sm:p-6 space-y-4 text-xs text-[#24152F] overflow-y-auto flex-1">
+          {/* Instructions Box */}
+          <div className="p-3.5 rounded-xl border border-[#24152F]/15 bg-[#FAF6EE] text-[11px] text-[#24152F]/80 space-y-1">
+            <p className="font-bold text-[#24152F] flex items-center gap-1.5 text-xs">
+              <FileSpreadsheet className="w-3.5 h-3.5 text-[#24152F]" /> Estrutura esperada das colunas:
+            </p>
+            <p className="font-mono bg-white p-1.5 rounded border border-[#24152F]/10 text-[10px]">
+              Nome, Telefone, Grupo, Acompanhantes
+            </p>
+            <p className="text-[#24152F]/60 pt-0.5">
+              Exemplo: Carlos Silva, (61) 99999-0000, Amigos, 2
+            </p>
+          </div>
+
+          {/* Upload Area */}
+          <div className="p-6 border-2 border-dashed border-[#24152F]/20 rounded-xl bg-[#FAF6EE]/50 hover:bg-[#FAF6EE] text-center space-y-3 transition-colors">
+            <Upload className="w-8 h-8 text-[#24152F]/40 mx-auto" />
             <div>
-              <p className="font-semibold text-sm">Selecione o arquivo CSV de convidados</p>
-              <p className="text-[#231F20]/60 text-xs mt-0.5">
-                Colunas esperadas: Nome, Telefone, Grupo, Limite Acompanhantes
+              <p className="font-bold text-xs text-[#24152F]">
+                {fileName ? fileName : 'Selecione ou arraste seu arquivo .CSV'}
+              </p>
+              <p className="text-[11px] text-[#24152F]/50 mt-0.5">
+                Codificação UTF-8 recomendada
               </p>
             </div>
 
-            <div className="flex flex-wrap items-center justify-center gap-2 pt-2">
-              <label className="cursor-pointer px-3.5 py-2 rounded-lg bg-[#1B3024] text-[#FEFDF3] font-semibold hover:bg-[#231F20] transition-colors">
-                Escolher Arquivo CSV
-                <input type="file" accept=".csv" onChange={handleFileUpload} className="hidden" />
+            <div className="flex items-center justify-center gap-2 pt-1">
+              <label className="px-3.5 py-1.5 bg-[#24152F] hover:bg-[#180D20] text-[#F7F1E5] rounded-xl text-xs font-semibold cursor-pointer shadow-xs border border-[#3F2553]">
+                Selecionar Arquivo
+                <input
+                  type="file"
+                  accept=".csv"
+                  onChange={handleFileUpload}
+                  className="hidden"
+                />
               </label>
 
               <button
                 type="button"
-                id="btn-load-sample-csv"
                 onClick={handleLoadSample}
-                className="cursor-pointer px-3.5 py-2 rounded-lg border border-[#1B3024]/30 bg-[#DFFFAE]/30 text-[#1B3024] font-semibold hover:bg-[#DFFFAE]/60 transition-colors"
+                className="px-3 py-1.5 border border-[#24152F]/20 hover:bg-white rounded-xl text-xs font-semibold text-[#24152F] cursor-pointer"
               >
-                Carregar Exemplo (5 convidados)
+                Carregar Exemplo
               </button>
             </div>
           </div>
 
-          {/* Validation & Preview */}
+          {/* Table Preview */}
           {rows.length > 0 && (
-            <div className="space-y-3">
-              <div className="flex items-center justify-between p-3 rounded-lg bg-[#DFFFAE]/20 border border-[#DFFFAE] text-[#1B3024]">
-                <div className="flex items-center gap-2">
-                  <CheckCircle2 className="w-4 h-4 text-[#1B3024]" />
-                  <span className="font-semibold">
-                    {rows.length} convidados identificados e validados no arquivo {fileName}
-                  </span>
-                </div>
-                <span className="text-[11px] font-bold">0 erros • Sem duplicidades</span>
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="font-bold text-xs text-[#24152F] flex items-center gap-1.5">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                  {rows.length} convidados identificados para importação:
+                </span>
+                <span className="text-[10px] text-[#24152F]/50">Códigos únicos serão gerados automaticamente</span>
               </div>
 
-              <div className="max-h-48 overflow-y-auto rounded-lg border border-[#231F20]/10 bg-white">
+              <div className="overflow-x-auto rounded-xl border border-[#24152F]/10 max-h-48 overflow-y-auto">
                 <table className="w-full text-left text-[11px]">
-                  <thead className="bg-[#FEFDF3] border-b border-[#231F20]/10 font-semibold text-[#231F20]/70">
+                  <thead className="bg-[#FAF6EE] text-[#24152F]/70 font-semibold sticky top-0 border-b border-[#24152F]/10">
                     <tr>
-                      <th className="p-2">Nome Completo</th>
-                      <th className="p-2">Telefone</th>
-                      <th className="p-2">Grupo</th>
-                      <th className="p-2 text-center">Cota</th>
-                      <th className="p-2 text-right">Status</th>
+                      <th className="py-2 px-3">Nome</th>
+                      <th className="py-2 px-3">Telefone</th>
+                      <th className="py-2 px-3">Grupo</th>
+                      <th className="py-2 px-3">Cota</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-[#231F20]/5">
-                    {rows.map((row, idx) => (
-                      <tr key={idx} className="hover:bg-[#FEFDF3]/40">
-                        <td className="p-2 font-medium">{row.name}</td>
-                        <td className="p-2 text-[#231F20]/70">{row.phone}</td>
-                        <td className="p-2">{row.group}</td>
-                        <td className="p-2 text-center font-bold">+{row.maxGuests}</td>
-                        <td className="p-2 text-right text-[#1B3024] font-semibold">Válido</td>
+                  <tbody className="divide-y divide-[#24152F]/5">
+                    {rows.map((r, i) => (
+                      <tr key={i} className="hover:bg-[#FAF6EE]/50">
+                        <td className="py-2 px-3 font-semibold text-[#24152F]">{r.name}</td>
+                        <td className="py-2 px-3 text-[#24152F]/70">{r.phone || '—'}</td>
+                        <td className="py-2 px-3">{r.group}</td>
+                        <td className="py-2 px-3 font-bold text-[#24152F]">+{r.maxGuests}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -226,23 +245,24 @@ export const ImportCsvModal: React.FC<ImportCsvModalProps> = ({
             </div>
           )}
 
-          <div className="flex items-center justify-end space-x-2 pt-3 border-t border-[#231F20]/10">
+          <div className="flex flex-col-reverse sm:flex-row items-center justify-end gap-2.5 pt-3 border-t border-[#24152F]/10">
             <button
               type="button"
-              id="btn-cancel-csv-modal"
+              id="btn-cancel-import-modal"
               onClick={onClose}
-              className="px-4 py-2 rounded-lg border border-[#231F20]/20 text-xs font-semibold hover:bg-[#231F20]/5 cursor-pointer"
+              className="w-full sm:w-auto px-4 py-2.5 rounded-xl border border-[#24152F]/20 text-xs font-semibold text-[#24152F] hover:bg-[#F7F1E5] cursor-pointer text-center"
             >
               Cancelar
             </button>
             <button
               type="button"
               id="btn-confirm-import-csv"
-              disabled={rows.length === 0}
-              onClick={handleConfirm}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-[#1B3024] disabled:opacity-40 hover:bg-[#231F20] text-[#FEFDF3] text-xs font-semibold cursor-pointer shadow-sm"
+              disabled={rows.length === 0 || isProcessing}
+              onClick={handleConfirmImport}
+              className="w-full sm:w-auto flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-[#24152F] hover:bg-[#180D20] text-[#F7F1E5] text-xs font-semibold shadow-sm disabled:opacity-40 cursor-pointer border border-[#3F2553] text-center"
             >
-              <Check className="w-3.5 h-3.5 text-[#DFFFAE]" /> Confirmar Importação ({rows.length})
+              <Check className="w-3.5 h-3.5 text-[#DFFF5F]" />
+              <span>Importar {rows.length > 0 ? `(${rows.length})` : ''}</span>
             </button>
           </div>
         </div>
@@ -250,4 +270,3 @@ export const ImportCsvModal: React.FC<ImportCsvModalProps> = ({
     </div>
   );
 };
-
