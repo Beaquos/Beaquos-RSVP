@@ -13,9 +13,10 @@ import {
   CheckCircle2,
   AlertCircle,
   Edit3,
+  ShieldCheck,
 } from 'lucide-react';
 import { EventData, GuestData } from '../../data/mockData';
-import { copyToClipboard, getEventRsvpUrl } from '../../utils/linkUtils';
+import { copyToClipboard, getClientPanelUrl } from '../../utils/linkUtils';
 import { formatDateBR } from '../../utils/dateUtils';
 
 interface MasterEventsHubProps {
@@ -48,11 +49,11 @@ export const MasterEventsHub: React.FC<MasterEventsHubProps> = ({
 
   const handleCopyLink = async (e: React.MouseEvent, event: EventData) => {
     e.stopPropagation();
-    const url = getEventRsvpUrl(event.id, event.slug);
+    const url = getClientPanelUrl(event.id, event.slug);
     const ok = await copyToClipboard(url);
     if (ok) {
       setCopiedEventId(event.id);
-      onShowToast(`Link do evento "${event.name}" copiado com sucesso!`);
+      onShowToast(`Link de acesso do responsável para "${event.name}" copiado com sucesso!`);
       setTimeout(() => setCopiedEventId(null), 2500);
     }
   };
@@ -88,7 +89,7 @@ export const MasterEventsHub: React.FC<MasterEventsHubProps> = ({
           <div className="w-5 h-5 rounded-md bg-[#DFFF5F] text-[#180D20] flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform">
             <Plus className="w-3.5 h-3.5" />
           </div>
-          <span>+ Novo evento</span>
+          <span>Novo evento</span>
         </button>
       </div>
 
@@ -122,10 +123,10 @@ export const MasterEventsHub: React.FC<MasterEventsHubProps> = ({
           </div>
         </div>
 
-        {/* Total de Convites */}
+        {/* Total de Convidados */}
         <div className="bg-white p-3.5 sm:p-5 rounded-2xl border border-[#24152F]/15 shadow-xs flex flex-col justify-between hover:border-[#24152F]/40 transition-all">
           <div className="flex items-center justify-between text-[#24152F] text-xs font-bold">
-            <span className="truncate pr-1">Total Convites</span>
+            <span className="truncate pr-1">Total Convidados</span>
             <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-[#24152F]/10 text-[#24152F] flex items-center justify-center shadow-xs flex-shrink-0">
               <Users className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#24152F]" />
             </div>
@@ -302,7 +303,7 @@ export const MasterEventsHub: React.FC<MasterEventsHubProps> = ({
 
                   {/* Actions Row: Responsive grid across mobile, tablet and desktop */}
                   <div className="pt-3.5 mt-3.5 border-t border-[#24152F]/10 grid grid-cols-1 sm:grid-cols-3 md:grid-cols-1 xl:grid-cols-3 gap-2">
-                    {/* 1. Copiar Link do Evento */}
+                    {/* 1. Link do Responsável */}
                     <button
                       type="button"
                       id={`btn-copy-event-${ev.id}`}
@@ -312,16 +313,16 @@ export const MasterEventsHub: React.FC<MasterEventsHubProps> = ({
                           ? 'bg-emerald-50 border-emerald-300 text-emerald-800'
                           : 'bg-white hover:bg-[#F7F1E5] border-[#24152F]/15 hover:border-[#24152F] text-[#24152F]'
                       }`}
-                      title="Copiar link RSVP do evento"
+                      title={`Link de acesso para ${ev.clientName || 'o responsável'} acompanhar o evento`}
                     >
                       <div
                         className={`w-5 h-5 rounded flex items-center justify-center flex-shrink-0 ${
                           isCopied ? 'bg-emerald-200 text-emerald-800' : 'bg-[#24152F]/10 text-[#24152F]'
                         }`}
                       >
-                        {isCopied ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+                        {isCopied ? <Check className="w-3 h-3" /> : <ShieldCheck className="w-3.5 h-3.5" />}
                       </div>
-                      <span className="truncate">{isCopied ? 'Link Copiado!' : 'Copiar Link'}</span>
+                      <span className="truncate">{isCopied ? 'Link Copiado!' : 'Link do Responsável'}</span>
                     </button>
 
                     {/* 2. Editar */}

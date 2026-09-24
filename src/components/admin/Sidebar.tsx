@@ -72,7 +72,7 @@ const EVENT_NAV_ITEMS: NavItem[] = [
   },
   {
     id: 'events',
-    label: 'Dados do Evento',
+    label: 'Dados',
     iconName: 'Calendar',
   },
   {

@@ -14,6 +14,7 @@ import { EventData, GuestData } from '../../data/mockData';
 import { formatDateBR } from '../../utils/dateUtils';
 import { getEventIcon } from '../../utils/eventIconUtils';
 import { exportReportToXLSX, exportReportToPDF } from '../../utils/reportExportUtils';
+import { ExportDataDropdown } from '../common/ExportDataDropdown';
 
 interface HubReportsViewProps {
   events: EventData[];
@@ -112,29 +113,12 @@ export const HubReportsView: React.FC<HubReportsViewProps> = ({
             ))}
           </select>
 
-          {/* Exportar XLSX */}
-          <button
-            type="button"
-            id="btn-export-hub-xlsx"
-            onClick={handleExportXLSX}
-            className="flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-semibold shadow-xs transition-all active:scale-95 cursor-pointer border border-emerald-900 flex-1 sm:flex-initial"
-            title="Exportar dados para planilha Excel (.xlsx)"
-          >
-            <FileSpreadsheet className="w-3.5 h-3.5 text-[#DFFF5F]" />
-            <span>Exportar XLSX</span>
-          </button>
-
-          {/* Exportar PDF */}
-          <button
-            type="button"
-            id="btn-export-hub-pdf"
-            onClick={handleExportPDF}
-            className="flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#24152F] hover:bg-[#180D20] text-[#F7F1E5] text-xs font-semibold shadow-xs transition-all active:scale-95 cursor-pointer border border-[#3F2553] flex-1 sm:flex-initial"
-            title="Exportar documento oficial em PDF formatado"
-          >
-            <FileText className="w-3.5 h-3.5 text-[#DFFF5F]" />
-            <span>Exportar PDF</span>
-          </button>
+          {/* Botão Unificado Exportar Dados */}
+          <ExportDataDropdown
+            id="btn-export-hub-data"
+            onExportXLSX={handleExportXLSX}
+            onExportPDF={handleExportPDF}
+          />
         </div>
       </div>
 

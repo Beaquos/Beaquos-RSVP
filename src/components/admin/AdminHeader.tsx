@@ -51,7 +51,7 @@ const EVENT_SECTION_TITLES: Record<NavSection, { title: string }> = {
     title: 'Dashboard',
   },
   events: {
-    title: 'Dados do Evento',
+    title: 'Dados',
   },
   'form-builder': {
     title: 'Formulários',
@@ -133,24 +133,8 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
                 </h1>
               </div>
             ) : (
-              /* Inside Specific Event Header */
-              <div className="space-y-0.5">
-                <div className="flex items-center space-x-1.5 text-[11px] font-medium text-[#24152F]/60 dark:text-[#D2C4DC]/70">
-                  {onExitToMaster && (
-                    <button
-                      type="button"
-                      id="btn-breadcrumb-exit-master"
-                      onClick={onExitToMaster}
-                      className="text-[#24152F] dark:text-[#F7F1E5] hover:underline font-semibold flex items-center gap-1 cursor-pointer"
-                    >
-                      <ArrowLeft className="w-3 h-3" />
-                      <span>Hub Geral</span>
-                    </button>
-                  )}
-                  <span>/</span>
-                  <span className="text-[#24152F]/80 dark:text-[#D2C4DC] truncate">{eventMeta.title}</span>
-                </div>
-
+              /* Inside Specific Event Header - Mantém apenas o título do evento como identificação */
+              <div className="flex items-center">
                 {/* Event Selector Dropdown */}
                 <div className="relative" ref={eventDropdownRef}>
                   <button

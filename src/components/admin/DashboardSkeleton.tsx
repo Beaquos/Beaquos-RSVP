@@ -29,6 +29,7 @@ import { EventData, GuestData, FormQuestionData, ManagerData } from '../../data/
 import { copyToClipboard, getEventRsvpUrl, getGuestRsvpUrl } from '../../utils/linkUtils';
 import { formatDateBR, formatDateTimeBR } from '../../utils/dateUtils';
 import { exportReportToXLSX, exportReportToPDF } from '../../utils/reportExportUtils';
+import { ExportDataDropdown } from '../common/ExportDataDropdown';
 import { WhatsAppIcon } from '../common/WhatsAppIcon';
 
 interface DashboardSkeletonProps {
@@ -77,7 +78,7 @@ export const DashboardSkeleton: React.FC<DashboardSkeletonProps> = ({
   hasCopiedLink = false,
 }) => {
   const [guestSearch, setGuestSearch] = useState('');
-  const [guestStatusFilter, setGuestStatusFilter] = useState<'all' | 'confirmed' | 'pending' | 'declined'>('all');
+  const [guestStatusFilter, setGuestStatusFilter] = useState<'all' | 'confirmed' | 'declined'>('all');
   const [copiedGuestId, setCopiedGuestId] = useState<string | null>(null);
   const [localEventCopied, setLocalEventCopied] = useState(false);
 
@@ -106,13 +107,13 @@ export const DashboardSkeleton: React.FC<DashboardSkeletonProps> = ({
   };
 
   // Calculate real metrics from guests
-  const totalGuests = guests.length;
+  // Total Convidados: soma de Confirmados (titulares) + Acompanhantes + Não Comparecem
   const confirmedGuests = guests.filter((g) => g.status === 'confirmed');
-  const pendingGuests = guests.filter((g) => g.status === 'pending');
   const declinedGuests = guests.filter((g) => g.status === 'declined');
   const totalCompanions = confirmedGuests.reduce((acc, g) => acc + (g.companionCount || 0), 0);
   const totalAttending = confirmedGuests.length + totalCompanions;
-  const confirmedRate = totalGuests > 0 ? Math.round((confirmedGuests.length / totalGuests) * 100) : 0;
+  const totalConvidados = confirmedGuests.length + totalCompanions + declinedGuests.length;
+  const confirmedRate = totalConvidados > 0 ? Math.round((totalAttending / totalConvidados) * 100) : 0;
 
   // Filtered guests
   const filteredGuests = guests.filter((g) => {
@@ -194,19 +195,19 @@ export const DashboardSkeleton: React.FC<DashboardSkeletonProps> = ({
             </div>
           </div>
 
-          {/* Metrics Row (5 Cards) with highlighted icon badges */}
-          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-5 gap-2.5 sm:gap-3.5">
-            {/* Total Convites */}
+          {/* Metrics Row (4 Cards) with highlighted icon badges */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3.5">
+            {/* Total Convidados */}
             <div className="bg-white p-3.5 sm:p-4 rounded-2xl border border-[#24152F]/15 shadow-xs flex flex-col justify-between hover:border-[#24152F]/30 transition-all">
               <div className="flex items-center justify-between text-[#24152F] text-xs font-bold">
-                <span className="truncate pr-1">Total Convites</span>
+                <span className="truncate pr-1">Total Convidados</span>
                 <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-[#24152F]/10 text-[#24152F] flex items-center justify-center shadow-xs flex-shrink-0">
                   <Users className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#24152F]" />
                 </div>
               </div>
               <div className="mt-2.5">
                 <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-[#24152F] tracking-tight">
-                  {totalGuests}
+                  {totalConvidados}
                 </p>
                 <p className="text-[10px] sm:text-[11px] text-[#24152F]/60 mt-0.5 font-medium">Cadastrados no evento</p>
               </div>
@@ -252,24 +253,8 @@ export const DashboardSkeleton: React.FC<DashboardSkeletonProps> = ({
               </div>
             </div>
 
-            {/* Pendentes */}
-            <div className="bg-white p-3.5 sm:p-4 rounded-2xl border border-amber-200 shadow-xs flex flex-col justify-between hover:border-amber-300 transition-all">
-              <div className="flex items-center justify-between text-amber-900 text-xs font-bold">
-                <span className="truncate pr-1">Pendentes</span>
-                <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-amber-100 text-amber-900 flex items-center justify-center shadow-xs flex-shrink-0">
-                  <Clock className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-900" />
-                </div>
-              </div>
-              <div className="mt-2.5">
-                <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-amber-900 tracking-tight">
-                  {pendingGuests.length}
-                </p>
-                <p className="text-[10px] sm:text-[11px] text-amber-800/80 mt-0.5 font-medium">Aguardando resposta</p>
-              </div>
-            </div>
-
-            {/* Recusados */}
-            <div className="bg-white p-3.5 sm:p-4 rounded-2xl border border-rose-200 shadow-xs flex flex-col justify-between col-span-2 sm:col-span-1 hover:border-rose-300 transition-all">
+            {/* Não Comparecem */}
+            <div className="bg-white p-3.5 sm:p-4 rounded-2xl border border-rose-200 shadow-xs flex flex-col justify-between hover:border-rose-300 transition-all">
               <div className="flex items-center justify-between text-rose-900 text-xs font-bold">
                 <span className="truncate pr-1">Não Comparecem</span>
                 <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-rose-100 text-rose-900 flex items-center justify-center shadow-xs flex-shrink-0">
@@ -308,7 +293,6 @@ export const DashboardSkeleton: React.FC<DashboardSkeletonProps> = ({
                 <thead className="bg-[#F7F1E5] border-b border-[#24152F]/10 text-[#24152F]/70 font-semibold">
                   <tr>
                     <th className="py-2.5 px-3">Convidado</th>
-                    <th className="py-2.5 px-3">Evento</th>
                     <th className="py-2.5 px-3">Status</th>
                     <th className="py-2.5 px-3 text-center">Acompanhantes</th>
                     <th className="py-2.5 px-3">Data e Hora</th>
@@ -322,11 +306,6 @@ export const DashboardSkeleton: React.FC<DashboardSkeletonProps> = ({
                         <span className="font-semibold text-[#24152F]">{g.name}</span>
                         <span className="block text-[10px] text-[#24152F]/50 font-mono">
                           Código: {g.rsvpCode}
-                        </span>
-                      </td>
-                      <td className="py-3 px-3 text-[#24152F]/80">
-                        <span className="truncate max-w-[150px] inline-block" title={event.name}>
-                          {event.name}
                         </span>
                       </td>
                       <td className="py-3 px-3">
@@ -416,14 +395,14 @@ export const DashboardSkeleton: React.FC<DashboardSkeletonProps> = ({
               <div className="space-y-4">
                 <div className="flex items-center justify-between pb-3 border-b border-[#24152F]/10">
                   <div>
-                    <h3 className="text-base font-bold text-[#24152F]">Dados do Evento</h3>
+                    <h3 className="text-base font-bold text-[#24152F]">Dados</h3>
                   </div>
                   <button
                     id="btn-create-event-tab"
                     onClick={onEditEvent}
                     className="px-3.5 py-2 bg-[#24152F] text-[#F7F1E5] text-xs font-semibold rounded-lg hover:bg-[#180D20] transition-colors shadow-sm border border-[#3F2553]"
                   >
-                    Editar Dados do Evento
+                    Editar Dados
                   </button>
                 </div>
 
@@ -634,9 +613,9 @@ export const DashboardSkeleton: React.FC<DashboardSkeletonProps> = ({
                   </div>
 
                   <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
-                    <button
-                      id="btn-export-guest-xlsx"
-                      onClick={() => {
+                    <ExportDataDropdown
+                      id="btn-export-guest-data"
+                      onExportXLSX={() => {
                         try {
                           exportReportToXLSX({
                             reportTitle: `Lista_Convidados_${event.name}`,
@@ -651,14 +630,7 @@ export const DashboardSkeleton: React.FC<DashboardSkeletonProps> = ({
                           if (onShowToast) onShowToast('Erro ao exportar planilha XLSX.');
                         }
                       }}
-                      className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-3 py-2 sm:py-1.5 border border-emerald-800 text-xs font-semibold rounded-xl sm:rounded-lg bg-emerald-700 hover:bg-emerald-800 cursor-pointer text-white shadow-2xs"
-                      title="Exportar dados para planilha Excel (.xlsx)"
-                    >
-                      <FileSpreadsheet className="w-3.5 h-3.5 text-[#DFFF5F]" /> <span className="truncate">Exportar XLSX</span>
-                    </button>
-                    <button
-                      id="btn-export-guest-pdf"
-                      onClick={() => {
+                      onExportPDF={() => {
                         try {
                           exportReportToPDF({
                             reportTitle: `Lista de Convidados - ${event.name}`,
@@ -673,11 +645,7 @@ export const DashboardSkeleton: React.FC<DashboardSkeletonProps> = ({
                           if (onShowToast) onShowToast('Erro ao exportar documento PDF.');
                         }
                       }}
-                      className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-3 py-2 sm:py-1.5 border border-[#3F2553] text-xs font-semibold rounded-xl sm:rounded-lg bg-[#24152F] hover:bg-[#180D20] cursor-pointer text-[#F7F1E5] shadow-2xs"
-                      title="Exportar documento oficial em PDF formatado"
-                    >
-                      <FileText className="w-3.5 h-3.5 text-[#DFFF5F]" /> <span className="truncate">Exportar PDF</span>
-                    </button>
+                    />
                     <button
                       id="btn-import-csv"
                       onClick={onImportCsv}
@@ -709,7 +677,7 @@ export const DashboardSkeleton: React.FC<DashboardSkeletonProps> = ({
                   </div>
 
                   <div className="flex items-center gap-1.5 w-full sm:w-auto overflow-x-auto text-xs">
-                    {(['all', 'confirmed', 'pending', 'declined'] as const).map((status) => (
+                    {(['all', 'confirmed', 'declined'] as const).map((status) => (
                       <button
                         key={status}
                         onClick={() => setGuestStatusFilter(status)}
@@ -723,9 +691,7 @@ export const DashboardSkeleton: React.FC<DashboardSkeletonProps> = ({
                           ? `Todos (${guests.length})`
                           : status === 'confirmed'
                           ? `Confirmados (${confirmedGuests.length})`
-                          : status === 'pending'
-                          ? `Pendentes (${pendingGuests.length})`
-                          : `Recusados (${declinedGuests.length})`}
+                          : `Não Comparecem (${declinedGuests.length})`}
                       </button>
                     ))}
                   </div>
@@ -915,10 +881,9 @@ export const DashboardSkeleton: React.FC<DashboardSkeletonProps> = ({
                   </div>
 
                   <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
-                    <button
-                      type="button"
-                      id="btn-event-export-xlsx"
-                      onClick={() => {
+                    <ExportDataDropdown
+                      id="btn-event-export-data"
+                      onExportXLSX={() => {
                         try {
                           exportReportToXLSX({
                             reportTitle: `Relatorio_${event.name}`,
@@ -933,16 +898,7 @@ export const DashboardSkeleton: React.FC<DashboardSkeletonProps> = ({
                           if (onShowToast) onShowToast('Erro ao exportar XLSX.');
                         }
                       }}
-                      className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-3.5 py-2 bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-semibold rounded-xl sm:rounded-lg transition-colors shadow-2xs border border-emerald-900 cursor-pointer"
-                      title="Exportar planilha Excel (.xlsx)"
-                    >
-                      <FileSpreadsheet className="w-3.5 h-3.5 text-[#DFFF5F]" /> <span>Exportar XLSX</span>
-                    </button>
-
-                    <button
-                      type="button"
-                      id="btn-event-export-pdf"
-                      onClick={() => {
+                      onExportPDF={() => {
                         try {
                           exportReportToPDF({
                             reportTitle: `Relatório de Confirmações - ${event.name}`,
@@ -957,11 +913,7 @@ export const DashboardSkeleton: React.FC<DashboardSkeletonProps> = ({
                           if (onShowToast) onShowToast('Erro ao exportar PDF.');
                         }
                       }}
-                      className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-3.5 py-2 bg-[#24152F] hover:bg-[#180D20] text-[#F7F1E5] text-xs font-semibold rounded-xl sm:rounded-lg transition-colors shadow-2xs border border-[#3F2553] cursor-pointer"
-                      title="Exportar documento oficial em PDF formatado"
-                    >
-                      <FileText className="w-3.5 h-3.5 text-[#DFFF5F]" /> <span>Exportar PDF</span>
-                    </button>
+                    />
                   </div>
                 </div>
 
@@ -969,12 +921,11 @@ export const DashboardSkeleton: React.FC<DashboardSkeletonProps> = ({
                   <div className="p-4 rounded-xl border border-[#24152F]/10 bg-white space-y-2">
                     <p className="font-bold text-xs text-[#24152F]">Resumo para Cerimonial / Buffet</p>
                     <ul className="text-xs space-y-1.5 text-[#24152F]/80">
-                      <li>• Total de Convites Emitidos: <strong>{totalGuests}</strong></li>
+                      <li>• Total de Convidados: <strong>{totalConvidados}</strong></li>
                       <li>• Titulares Confirmados: <strong>{confirmedGuests.length}</strong></li>
                       <li>• Acompanhantes Adicionais: <strong>+{totalCompanions}</strong></li>
                       <li className="text-[#24152F] font-bold">• Total Geral de Presentes: <strong>{totalAttending} pessoas</strong></li>
-                      <li>• Ausências Confirmadas: <strong>{declinedGuests.length}</strong></li>
-                      <li>• Pendentes: <strong>{pendingGuests.length}</strong></li>
+                      <li>• Não Comparecem (Ausências): <strong>{declinedGuests.length}</strong></li>
                     </ul>
                   </div>
 

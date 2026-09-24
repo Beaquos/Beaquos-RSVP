@@ -182,3 +182,40 @@ html.dark ::-webkit-scrollbar-thumb {
 html.dark ::-webkit-scrollbar-thumb:hover {
   background: rgba(223, 255, 95, 0.35);
 }
+
+/* 
+  ACCESSIBILITY & HIGH CONTRAST (WCAG AA) FOR FORM BUTTONS:
+  Garante que nenhum botão de confirmação ou recusa tenha texto ou ícone
+  com a mesma cor do fundo, seja no tema claro ou escuro.
+*/
+#btn-rsvp-attending-yes[data-selected="true"] {
+  background-color: #DFFF5F !important;
+  color: #180D20 !important;
+  border-color: #b5db1e !important;
+}
+#btn-rsvp-attending-yes[data-selected="true"] svg,
+#btn-rsvp-attending-yes[data-selected="true"] span {
+  color: #180D20 !important;
+  stroke: #180D20 !important;
+}
+
+#btn-rsvp-attending-no[data-selected="true"] {
+  background-color: #e11d48 !important;
+  color: #ffffff !important;
+  border-color: #be123c !important;
+}
+#btn-rsvp-attending-no[data-selected="true"] svg,
+#btn-rsvp-attending-no[data-selected="true"] span {
+  color: #ffffff !important;
+  stroke: #ffffff !important;
+}
+
+#btn-submit-guest-rsvp:not(:disabled) {
+  background-color: #DFFF5F !important;
+  color: #180D20 !important;
+}
+#btn-submit-guest-rsvp:not(:disabled) svg,
+#btn-submit-guest-rsvp:not(:disabled) span {
+  color: #180D20 !important;
+  stroke: #180D20 !important;
+}

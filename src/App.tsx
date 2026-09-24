@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { AdminLayout } from './components/admin/AdminLayout';
 import { HubDashboardView } from './components/admin/HubDashboardView';
 import { HubReportsView } from './components/admin/HubReportsView';
@@ -13,6 +13,7 @@ import { LoginView } from './components/auth/LoginView';
 import { DashboardSkeleton } from './components/admin/DashboardSkeleton';
 import { MasterEventsHub } from './components/admin/MasterEventsHub';
 import { GuestRsvpView } from './components/guest/GuestRsvpView';
+import { ClientPortalView } from './components/client/ClientPortalView';
 import { EventModal } from './components/modals/EventModal';
 import { GuestModal } from './components/modals/GuestModal';
 import { ImportCsvModal } from './components/modals/ImportCsvModal';
@@ -34,7 +35,12 @@ import {
 } from './data/mockData';
 import { HubSection, NavSection } from './types/navigation';
 import { AdminUser, AdminUserStatus } from './types/user';
-import { copyToClipboard, getEventRsvpUrl } from './utils/linkUtils';
+import { copyToClipboard, getEventRsvpUrl, getGuestRsvpUrl } from './utils/linkUtils';
+import {
+  parseCurrentUrl,
+  getHubPath,
+  getEventPath,
+} from './utils/navigationRoutes';
 
 // Initial Registered Administrator User
 const INITIAL_ADMIN_USER: AdminUser = {
@@ -89,31 +95,10 @@ const INITIAL_ADMIN_USERS_LIST: AdminUser[] = [
 ];
 
 export default function App() {
-  // Current Path / Route detection for SPA and Vercel direct links
+  // Real browser URL is the single source of truth for routing
   const [currentPath, setCurrentPath] = useState<string>(() => {
-    return typeof window !== 'undefined' ? window.location.pathname : '/';
+    return typeof window !== 'undefined' ? window.location.pathname : '/dashboard';
   });
-
-  useEffect(() => {
-    const handleLocationChange = () => {
-      setCurrentPath(window.location.pathname);
-    };
-
-    window.addEventListener('popstate', handleLocationChange);
-    return () => window.removeEventListener('popstate', handleLocationChange);
-  }, []);
-
-  // Authentication State
-  const [isAuthenticated, setIsAuthenticated] = useState(true);
-  const [currentUser, setCurrentUser] = useState<AdminUser>(INITIAL_ADMIN_USER);
-  const [adminUsers, setAdminUsers] = useState<AdminUser[]>(INITIAL_ADMIN_USERS_LIST);
-
-  // Hub Navigation State: 'dashboard' | 'events' | 'reports' | 'users'
-  const [currentHubSection, setCurrentHubSection] = useState<HubSection>('dashboard');
-
-  // Navigation mode: 'master' (Hub geral Rafluo) | 'event' (Painel do evento do cliente)
-  const [viewMode, setViewMode] = useState<'master' | 'event'>('master');
-  const [currentSection, setCurrentSection] = useState<NavSection>('overview');
 
   // Core Data States
   const [events, setEvents] = useState<EventData[]>(INITIAL_EVENTS);
@@ -121,6 +106,11 @@ export default function App() {
   const [guests, setGuests] = useState<GuestData[]>(INITIAL_GUESTS);
   const [questions, setQuestions] = useState<FormQuestionData[]>(INITIAL_QUESTIONS);
   const [managers, setManagers] = useState<ManagerData[]>(INITIAL_MANAGERS);
+
+  // Authentication State
+  const [isAuthenticated, setIsAuthenticated] = useState(true);
+  const [currentUser, setCurrentUser] = useState<AdminUser>(INITIAL_ADMIN_USER);
+  const [adminUsers, setAdminUsers] = useState<AdminUser[]>(INITIAL_ADMIN_USERS_LIST);
 
   // Modals Visibility
   const [isEventModalOpen, setIsEventModalOpen] = useState(false);
@@ -144,25 +134,76 @@ export default function App() {
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [hasCopiedHeaderLink, setHasCopiedHeaderLink] = useState(false);
 
-  // Currently Active Event
-  const activeEvent: EventData =
-    events.find((e) => e.id === activeEventId) || events[0] || INITIAL_EVENTS[0];
+  // Navigation controller ensuring URL push/replace and state update
+  const navigateTo = useCallback((newPath: string, replace = false) => {
+    if (typeof window === 'undefined') return;
+    if (newPath === window.location.pathname) {
+      setCurrentPath(newPath);
+      return;
+    }
+    if (replace) {
+      window.history.replaceState({}, '', newPath);
+    } else {
+      window.history.pushState({}, '', newPath);
+    }
+    setCurrentPath(newPath);
+  }, []);
 
-  // Filter guests belonging to the active event for the event dashboard
+  // Listen to browser Back/Forward (popstate)
+  useEffect(() => {
+    const handlePopState = () => {
+      setCurrentPath(window.location.pathname);
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
+  // Redirect root "/" to "/dashboard"
+  useEffect(() => {
+    if (typeof window !== 'undefined' && (window.location.pathname === '/' || window.location.pathname === '')) {
+      navigateTo('/dashboard', true);
+    }
+  }, [navigateTo]);
+
+  // Parse current route based on URL and database state
+  const route = parseCurrentUrl(currentPath, events, guests);
+
+  // Keep activeEventId synchronized when navigating inside an event
+  useEffect(() => {
+    if (route.type === 'event' && route.matchedEvent) {
+      setActiveEventId(route.matchedEvent.id);
+    }
+  }, [route]);
+
+  // Active event resolution
+  const activeEvent: EventData =
+    (route.type === 'event' && route.matchedEvent) ||
+    events.find((e) => e.id === activeEventId) ||
+    events[0] ||
+    INITIAL_EVENTS[0];
+
+  // Guests for active event
   const activeEventGuests = guests.filter((g) => g.eventId === activeEvent.id);
 
-  // Handlers for switching and exiting
+  // Navigation handlers
   const handleSelectEvent = (selected: EventData) => {
     setActiveEventId(selected.id);
-    setViewMode('event');
-    setCurrentSection('overview');
-    setToastMessage(`Acessando a gestão operacional de "${selected.name}"`);
+    navigateTo(getEventPath(selected, 'overview'));
+    setToastMessage(`Acessando a gestão de "${selected.name}"`);
   };
 
   const handleExitToMaster = () => {
-    setViewMode('master');
-    setCurrentHubSection('events');
-    setToastMessage('Você está no Hub Administrativo Geral.');
+    navigateTo('/eventos');
+    setToastMessage('Você está no Hub Geral de Eventos.');
+  };
+
+  const handleSelectHubSection = (hubSec: HubSection) => {
+    navigateTo(getHubPath(hubSec));
+  };
+
+  const handleSelectEventSection = (sec: NavSection) => {
+    navigateTo(getEventPath(activeEvent, sec));
   };
 
   // Copying event RSVP link
@@ -172,7 +213,7 @@ export default function App() {
     const ok = await copyToClipboard(url);
     if (ok) {
       setHasCopiedHeaderLink(true);
-      setToastMessage(`Link do evento "${ev.name}" copiado com sucesso!`);
+      setToastMessage(`Link público do convite "${ev.name}" copiado com sucesso!`);
       setTimeout(() => setHasCopiedHeaderLink(false), 2500);
     }
   };
@@ -217,6 +258,7 @@ export default function App() {
 
     setActiveEventId(updated.id);
     setToastMessage(`Evento "${updated.name || 'Novo Evento'}" salvo com sucesso!`);
+    navigateTo(getEventPath(updated, 'overview'));
   };
 
   const handleAddGuest = (newGuest: GuestData) => {
@@ -279,7 +321,7 @@ export default function App() {
     setIsGuestPreviewMode(true);
   };
 
-  // Submit RSVP from the guest perspective
+  // Submit RSVP from individual guest perspective (/rsvp/:code or preview)
   const handleSubmitGuestRsvp = (
     guestId: string,
     status: 'confirmed' | 'declined',
@@ -308,6 +350,46 @@ export default function App() {
       status === 'confirmed'
         ? 'Presença confirmada com sucesso!'
         : 'Ausência informada com sucesso.'
+    );
+  };
+
+  // Submit RSVP from the Public Event Link perspective (/rsvp/evento/:slug)
+  const handlePublicRsvpSubmit = (
+    _guestId: string,
+    status: 'confirmed' | 'declined',
+    companionCount: number,
+    companionNames: string[],
+    answers: Record<string, any>,
+    guestInfo?: { name: string; phone: string; email: string }
+  ) => {
+    if (!route.matchedEvent) return;
+    const targetEvent = route.matchedEvent;
+    const updatedTimestamp = new Date().toISOString().split('T')[0];
+    const newName = guestInfo?.name?.trim() || 'Convidado';
+
+    const newGuest: GuestData = {
+      id: `g-pub-${Date.now()}`,
+      eventId: targetEvent.id,
+      name: newName,
+      displayName: newName,
+      phone: guestInfo?.phone || '',
+      email: guestInfo?.email || '',
+      group: 'Geral',
+      maxGuests: targetEvent.maxGuestsPerInvite || 2,
+      rsvpCode: `RSVP-${targetEvent.id.toUpperCase().replace(/\W/g, '')}-${Date.now().toString().slice(-4)}`,
+      notes: 'Confirmado pelo link público do evento',
+      status,
+      respondedAt: updatedTimestamp,
+      companionCount,
+      companionNames,
+      answers,
+    };
+
+    setGuests((prev) => [newGuest, ...prev]);
+    setToastMessage(
+      status === 'confirmed'
+        ? `Presença confirmada para "${newName}"!`
+        : `Ausência informada para "${newName}".`
     );
   };
 
@@ -346,13 +428,13 @@ export default function App() {
     setToastMessage('Status do usuário administrativo alterado com sucesso.');
   };
 
-  // Logout - Section 10
+  // Logout
   const handleLogout = () => {
     setIsAuthenticated(false);
     setToastMessage('Sessão encerrada com sucesso.');
   };
 
-  // Login - Section 10
+  // Login
   const handleLogin = (user: AdminUser) => {
     setCurrentUser(user);
     setIsAuthenticated(true);
@@ -402,116 +484,81 @@ export default function App() {
     setToastMessage('Planilha de convidados exportada com sucesso!');
   };
 
-  // Check for Public Event RSVP URL: /rsvp/evento/:slug
-  const cleanPath = currentPath.replace(/\/+$/, '');
-  const rsvpEventMatch = cleanPath.match(/^\/rsvp\/evento\/([^/]+)$/i);
-  const rsvpGuestMatch = cleanPath.match(/^\/rsvp\/([^/]+)$/i);
+  // 0. CLIENT PORTAL (PAINEL DO RESPONSÁVEL / CONTRATANTE): /responsavel/:slugOrId
+  // Dedicated access portal for the client/responsible party to track RSVPs, get metrics and share links
+  if (route.type === 'client-portal' && route.matchedEvent) {
+    const portalGuests = guests.filter((g) => g.eventId === route.matchedEvent!.id);
+    const portalManagers = managers.filter((m) => m.eventId === route.matchedEvent!.id);
+    const portalQuestions = questions.filter((q) => q.eventId === route.matchedEvent!.id);
 
-  if (rsvpEventMatch) {
-    const rawSlug = decodeURIComponent(rsvpEventMatch[1]).toLowerCase().trim();
-    // Search event by slug or id (case-insensitive)
-    const matchedEvent = events.find(
-      (e) =>
-        (e.slug && e.slug.toLowerCase().trim() === rawSlug) ||
-        e.id.toLowerCase().trim() === rawSlug
-    );
-
-    if (matchedEvent) {
-      // Find representative guest or first guest of this event
-      const eventGuests = guests.filter((g) => g.eventId === matchedEvent.id);
-      const targetGuest: GuestData = eventGuests[0] || {
-        id: `g-pub-${matchedEvent.id}`,
-        eventId: matchedEvent.id,
-        name: 'Convidado(a)',
-        displayName: 'Convidado(a) Especial',
-        phone: '',
-        email: '',
-        group: 'Geral',
-        maxGuests: matchedEvent.maxGuestsPerInvite || 1,
-        rsvpCode: `RSVP-${matchedEvent.id.toUpperCase()}`,
-        notes: 'Acesso pelo link público do evento',
-        status: 'pending',
-        respondedAt: null,
-        companionCount: 0,
-        companionNames: [],
-        answers: {},
-      };
-
-      const eventQuestions = questions.filter((q) => q.eventId === matchedEvent.id);
-
-      return (
-        <>
-          <Toast message={toastMessage} onClose={() => setToastMessage(null)} />
-          <GuestRsvpView
-            event={matchedEvent}
-            guest={targetGuest}
-            questions={eventQuestions.length > 0 ? eventQuestions : questions}
-            onBackToAdmin={() => {
-              if (window.history.pushState) {
-                window.history.pushState({}, '', '/');
-                setCurrentPath('/');
-              } else {
-                window.location.href = '/';
-              }
-            }}
-            onSubmitRsvp={handleSubmitGuestRsvp}
-            isPublicMode={true}
-          />
-        </>
-      );
-    } else {
-      // Slug not found
-      return (
-        <NotFoundView
-          searchedSlug={rawSlug}
-          onGoHome={() => {
-            if (window.history.pushState) {
-              window.history.pushState({}, '', '/');
-              setCurrentPath('/');
-            } else {
-              window.location.href = '/';
-            }
-          }}
+    return (
+      <>
+        <Toast message={toastMessage} onClose={() => setToastMessage(null)} />
+        <ClientPortalView
+          event={route.matchedEvent}
+          guests={portalGuests}
+          managers={portalManagers}
+          questions={portalQuestions}
+          onBackToHub={() => navigateTo('/eventos')}
+          onShowToast={(msg) => setToastMessage(msg)}
         />
-      );
-    }
-  }
-
-  // Check for Public Guest RSVP URL: /rsvp/:code (not /rsvp/evento)
-  if (rsvpGuestMatch && rsvpGuestMatch[1].toLowerCase() !== 'evento') {
-    const rawCode = decodeURIComponent(rsvpGuestMatch[1]).toLowerCase().trim();
-    const matchedGuest = guests.find(
-      (g) => g.rsvpCode.toLowerCase().trim() === rawCode
+      </>
     );
-
-    if (matchedGuest) {
-      const parentEvent = events.find((e) => e.id === matchedGuest.eventId) || activeEvent;
-      const eventQuestions = questions.filter((q) => q.eventId === parentEvent.id);
-
-      return (
-        <>
-          <Toast message={toastMessage} onClose={() => setToastMessage(null)} />
-          <GuestRsvpView
-            event={parentEvent}
-            guest={matchedGuest}
-            questions={eventQuestions.length > 0 ? eventQuestions : questions}
-            onBackToAdmin={() => {
-              if (window.history.pushState) {
-                window.history.pushState({}, '', '/');
-                setCurrentPath('/');
-              } else {
-                window.location.href = '/';
-              }
-            }}
-            onSubmitRsvp={handleSubmitGuestRsvp}
-            isPublicMode={true}
-          />
-        </>
-      );
-    }
   }
 
-  // 10. If not authenticated, render Login Screen
+  // 1. PUBLIC EVENT RSVP: /rsvp/evento/:slugOrId
+  // Clean public invite for any guest to introduce themselves and confirm their own RSVP
+  if (route.type === 'rsvp-event' && route.matchedEvent) {
+    const eventQuestions = questions.filter((q) => q.eventId === route.matchedEvent!.id);
+
+    return (
+      <>
+        <Toast message={toastMessage} onClose={() => setToastMessage(null)} />
+        <GuestRsvpView
+          event={route.matchedEvent}
+          guest={null}
+          questions={eventQuestions.length > 0 ? eventQuestions : questions}
+          onBackToAdmin={() => navigateTo('/dashboard')}
+          onSubmitRsvp={handlePublicRsvpSubmit}
+          isPublicMode={true}
+          isPublicEventInvite={true}
+        />
+      </>
+    );
+  }
+
+  // 2. INDIVIDUAL GUEST RSVP: /rsvp/:code
+  // Preserves existing response editing/consultation for a specific identified guest
+  if (route.type === 'rsvp-guest' && route.matchedGuest) {
+    const eventQuestions = questions.filter((q) => q.eventId === route.matchedEvent!.id);
+
+    return (
+      <>
+        <Toast message={toastMessage} onClose={() => setToastMessage(null)} />
+        <GuestRsvpView
+          event={route.matchedEvent!}
+          guest={route.matchedGuest}
+          questions={eventQuestions.length > 0 ? eventQuestions : questions}
+          onBackToAdmin={() => navigateTo('/dashboard')}
+          onSubmitRsvp={handleSubmitGuestRsvp}
+          isPublicMode={true}
+          isPublicEventInvite={false}
+        />
+      </>
+    );
+  }
+
+  // 3. 404 NOT FOUND: for invalid event slugs, guests codes, or unknown paths
+  if (route.type === 'not-found') {
+    return (
+      <NotFoundView
+        searchedSlug={route.eventIdOrSlug || route.guestCode || currentPath.replace(/^\//, '')}
+        onGoHome={() => navigateTo('/dashboard')}
+      />
+    );
+  }
+
+  // 4. AUTHENTICATION CHECK: Login screen if not authenticated
   if (!isAuthenticated) {
     return (
       <>
@@ -525,7 +572,7 @@ export default function App() {
     );
   }
 
-  // If in guest simulation mode, render guest experience
+  // 5. GUEST SIMULATION PREVIEW (Admin tool within dashboard)
   if (isGuestPreviewMode) {
     const activeGuest =
       guests.find((g) => g.rsvpCode === previewGuestCode) ||
@@ -537,26 +584,31 @@ export default function App() {
       <GuestRsvpView
         event={activeEvent}
         guest={activeGuest}
-        questions={questions}
+        questions={questions.filter((q) => q.eventId === activeEvent.id)}
         onBackToAdmin={() => setIsGuestPreviewMode(false)}
         onSubmitRsvp={handleSubmitGuestRsvp}
+        isPublicMode={false}
+        isPublicEventInvite={false}
       />
     );
   }
+
+  // 6. MAIN APPLICATION: Master Hub or Client Event Workspace
+  const isMasterView = route.type === 'hub';
+  const currentHubSection: HubSection = route.hubSection || 'dashboard';
+  const currentSection: NavSection =
+    (route.type === 'event' && route.eventSection) || 'overview';
 
   return (
     <>
       <Toast message={toastMessage} onClose={() => setToastMessage(null)} />
 
       <AdminLayout
-        isMasterView={viewMode === 'master'}
+        isMasterView={isMasterView}
         currentHubSection={currentHubSection}
-        onSelectHubSection={(hubSection) => {
-          setCurrentHubSection(hubSection);
-          setViewMode('master');
-        }}
+        onSelectHubSection={handleSelectHubSection}
         currentSection={currentSection}
-        onSelectSection={setCurrentSection}
+        onSelectSection={handleSelectEventSection}
         onOpenPreview={() => handleOpenGuestPreview()}
         activeEvent={activeEvent}
         events={events}
@@ -569,8 +621,8 @@ export default function App() {
         onOpenUserProfile={() => setIsUserProfileModalOpen(true)}
         onLogout={handleLogout}
       >
-        {viewMode === 'master' ? (
-          /* 1. MASTER ADMINISTRATIVE HUB: Dashboard | Eventos | Relatórios | Usuários */
+        {isMasterView ? (
+          /* MASTER ADMINISTRATIVE HUB: Dashboard | Eventos | Relatórios | Usuários */
           <>
             {currentHubSection === 'dashboard' && (
               <HubDashboardView
@@ -578,7 +630,7 @@ export default function App() {
                 events={events}
                 guests={guests}
                 onSelectEvent={handleSelectEvent}
-                onNavigateToEvents={() => setCurrentHubSection('events')}
+                onNavigateToEvents={() => navigateTo('/eventos')}
               />
             )}
 
@@ -599,7 +651,10 @@ export default function App() {
                 events={events}
                 guests={guests}
                 onShowToast={(msg) => setToastMessage(msg)}
-                onSelectEvent={handleSelectEvent}
+                onSelectEvent={(ev) => {
+                  setActiveEventId(ev.id);
+                  navigateTo(getEventPath(ev, 'analytics'));
+                }}
               />
             )}
 
@@ -614,10 +669,10 @@ export default function App() {
             )}
           </>
         ) : (
-          /* 2. EVENT OPERATIONAL WORKSPACE: Deep management of active event */
+          /* CLIENT EVENT OPERATIONAL WORKSPACE: Deep management of active event */
           <DashboardSkeleton
             currentSection={currentSection}
-            onNavigate={setCurrentSection}
+            onNavigate={handleSelectEventSection}
             event={activeEvent}
             onEditEvent={() => handleOpenEditEventModal(activeEvent)}
             questions={questions}

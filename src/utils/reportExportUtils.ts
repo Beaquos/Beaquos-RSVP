@@ -170,7 +170,7 @@ export const exportReportToPDF = ({
     .reduce((acc, g) => acc + (g.companionCount || 0), 0);
   const totalAttending = confirmedCount + totalCompanions;
   const declinedCount = guests.filter((g) => g.status === 'declined').length;
-  const pendingCount = guests.filter((g) => g.status === 'pending').length;
+  const totalConvidados = confirmedCount + totalCompanions + declinedCount;
 
   // Caixinhas de KPI
   doc.setFillColor(lightBg[0], lightBg[1], lightBg[2]);
@@ -181,7 +181,7 @@ export const exportReportToPDF = ({
   doc.setFontSize(8);
   doc.setFont('helvetica', 'bold');
   doc.setTextColor(purpleDark[0], purpleDark[1], purpleDark[2]);
-  const kpiText = `Total Convites: ${totalCount}   |   Presenças Confirmadas: ${totalAttending} (${confirmedCount} titulares + ${totalCompanions} acomp.)   |   Ausências: ${declinedCount}   |   Pendentes: ${pendingCount}`;
+  const kpiText = `Total Convidados: ${totalConvidados}   |   Presenças Confirmadas: ${totalAttending} (${confirmedCount} titulares + ${totalCompanions} acomp.)   |   Não Comparecem (Ausências): ${declinedCount}`;
   doc.text(kpiText, 18, currentY + 7);
 
   currentY += 15;

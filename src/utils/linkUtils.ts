@@ -36,3 +36,8 @@ export const getGuestRsvpUrl = (rsvpCode: string): string => {
   const origin = typeof window !== 'undefined' ? window.location.origin : 'https://beaquos.com';
   return `${origin}/rsvp/${rsvpCode}`;
 };
+
+export const getClientPanelUrl = (eventId: string, slug?: string): string => {
+  const origin = typeof window !== 'undefined' ? window.location.origin : 'https://beaquos.com';
+  return `${origin}/responsavel/${slug || eventId}`;
+};
