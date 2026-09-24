@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { AdminLayout } from './components/admin/AdminLayout';
 import { HubDashboardView } from './components/admin/HubDashboardView';
 import { HubReportsView } from './components/admin/HubReportsView';
@@ -20,6 +20,7 @@ import { QuestionModal } from './components/modals/QuestionModal';
 import { ManagerModal } from './components/modals/ManagerModal';
 import { WhatsAppModal } from './components/modals/WhatsAppModal';
 import { GuestDetailsModal } from './components/modals/GuestDetailsModal';
+import { NotFoundView } from './components/common/NotFoundView';
 import { Toast } from './components/common/Toast';
 import {
   INITIAL_EVENTS,
@@ -88,6 +89,20 @@ const INITIAL_ADMIN_USERS_LIST: AdminUser[] = [
 ];
 
 export default function App() {
+  // Current Path / Route detection for SPA and Vercel direct links
+  const [currentPath, setCurrentPath] = useState<string>(() => {
+    return typeof window !== 'undefined' ? window.location.pathname : '/';
+  });
+
+  useEffect(() => {
+    const handleLocationChange = () => {
+      setCurrentPath(window.location.pathname);
+    };
+
+    window.addEventListener('popstate', handleLocationChange);
+    return () => window.removeEventListener('popstate', handleLocationChange);
+  }, []);
+
   // Authentication State
   const [isAuthenticated, setIsAuthenticated] = useState(true);
   const [currentUser, setCurrentUser] = useState<AdminUser>(INITIAL_ADMIN_USER);
@@ -386,6 +401,115 @@ export default function App() {
     URL.revokeObjectURL(url);
     setToastMessage('Planilha de convidados exportada com sucesso!');
   };
+
+  // Check for Public Event RSVP URL: /rsvp/evento/:slug
+  const cleanPath = currentPath.replace(/\/+$/, '');
+  const rsvpEventMatch = cleanPath.match(/^\/rsvp\/evento\/([^/]+)$/i);
+  const rsvpGuestMatch = cleanPath.match(/^\/rsvp\/([^/]+)$/i);
+
+  if (rsvpEventMatch) {
+    const rawSlug = decodeURIComponent(rsvpEventMatch[1]).toLowerCase().trim();
+    // Search event by slug or id (case-insensitive)
+    const matchedEvent = events.find(
+      (e) =>
+        (e.slug && e.slug.toLowerCase().trim() === rawSlug) ||
+        e.id.toLowerCase().trim() === rawSlug
+    );
+
+    if (matchedEvent) {
+      // Find representative guest or first guest of this event
+      const eventGuests = guests.filter((g) => g.eventId === matchedEvent.id);
+      const targetGuest: GuestData = eventGuests[0] || {
+        id: `g-pub-${matchedEvent.id}`,
+        eventId: matchedEvent.id,
+        name: 'Convidado(a)',
+        displayName: 'Convidado(a) Especial',
+        phone: '',
+        email: '',
+        group: 'Geral',
+        maxGuests: matchedEvent.maxGuestsPerInvite || 1,
+        rsvpCode: `RSVP-${matchedEvent.id.toUpperCase()}`,
+        notes: 'Acesso pelo link público do evento',
+        status: 'pending',
+        respondedAt: null,
+        companionCount: 0,
+        companionNames: [],
+        answers: {},
+      };
+
+      const eventQuestions = questions.filter((q) => q.eventId === matchedEvent.id);
+
+      return (
+        <>
+          <Toast message={toastMessage} onClose={() => setToastMessage(null)} />
+          <GuestRsvpView
+            event={matchedEvent}
+            guest={targetGuest}
+            questions={eventQuestions.length > 0 ? eventQuestions : questions}
+            onBackToAdmin={() => {
+              if (window.history.pushState) {
+                window.history.pushState({}, '', '/');
+                setCurrentPath('/');
+              } else {
+                window.location.href = '/';
+              }
+            }}
+            onSubmitRsvp={handleSubmitGuestRsvp}
+            isPublicMode={true}
+          />
+        </>
+      );
+    } else {
+      // Slug not found
+      return (
+        <NotFoundView
+          searchedSlug={rawSlug}
+          onGoHome={() => {
+            if (window.history.pushState) {
+              window.history.pushState({}, '', '/');
+              setCurrentPath('/');
+            } else {
+              window.location.href = '/';
+            }
+          }}
+        />
+      );
+    }
+  }
+
+  // Check for Public Guest RSVP URL: /rsvp/:code (not /rsvp/evento)
+  if (rsvpGuestMatch && rsvpGuestMatch[1].toLowerCase() !== 'evento') {
+    const rawCode = decodeURIComponent(rsvpGuestMatch[1]).toLowerCase().trim();
+    const matchedGuest = guests.find(
+      (g) => g.rsvpCode.toLowerCase().trim() === rawCode
+    );
+
+    if (matchedGuest) {
+      const parentEvent = events.find((e) => e.id === matchedGuest.eventId) || activeEvent;
+      const eventQuestions = questions.filter((q) => q.eventId === parentEvent.id);
+
+      return (
+        <>
+          <Toast message={toastMessage} onClose={() => setToastMessage(null)} />
+          <GuestRsvpView
+            event={parentEvent}
+            guest={matchedGuest}
+            questions={eventQuestions.length > 0 ? eventQuestions : questions}
+            onBackToAdmin={() => {
+              if (window.history.pushState) {
+                window.history.pushState({}, '', '/');
+                setCurrentPath('/');
+              } else {
+                window.location.href = '/';
+              }
+            }}
+            onSubmitRsvp={handleSubmitGuestRsvp}
+            isPublicMode={true}
+          />
+        </>
+      );
+    }
+  }
 
   // 10. If not authenticated, render Login Screen
   if (!isAuthenticated) {

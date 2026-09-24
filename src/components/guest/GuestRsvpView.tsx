@@ -26,6 +26,7 @@ interface GuestRsvpViewProps {
     companionNames: string[],
     answers: Record<string, any>
   ) => void;
+  isPublicMode?: boolean;
 }
 
 export const GuestRsvpView: React.FC<GuestRsvpViewProps> = ({
@@ -34,6 +35,7 @@ export const GuestRsvpView: React.FC<GuestRsvpViewProps> = ({
   questions,
   onBackToAdmin,
   onSubmitRsvp,
+  isPublicMode = false,
 }) => {
   const [attending, setAttending] = useState<'sim' | 'nao' | null>(
     guest.status === 'confirmed' ? 'sim' : guest.status === 'declined' ? 'nao' : null
@@ -86,22 +88,24 @@ export const GuestRsvpView: React.FC<GuestRsvpViewProps> = ({
 
   return (
     <div className="min-h-screen bg-[#F7F1E5] text-[#24152F] font-sans pb-16 selection:bg-[#DFFF5F] selection:text-[#180D20]">
-      {/* Top Simulation Bar (Admin preview banner) */}
-      <div className="bg-[#24152F] text-[#F7F1E5] px-3 sm:px-4 py-2 sm:py-2.5 flex items-center justify-between gap-2 text-xs sticky top-0 z-50 border-b border-[#3F2553]/60 shadow-md">
-        <div className="flex items-center space-x-2 min-w-0">
-          <span className="w-2 h-2 rounded-full bg-[#DFFF5F] animate-pulse flex-shrink-0" />
-          <span className="font-semibold text-[#DFFF5F] truncate">Visualização do Convidado</span>
-          <span className="hidden sm:inline text-[#D2C4DC]/70">| Código: {guest.rsvpCode}</span>
+      {/* Top Simulation Bar (Admin preview banner only when NOT in public guest link mode) */}
+      {!isPublicMode && (
+        <div className="bg-[#24152F] text-[#F7F1E5] px-3 sm:px-4 py-2 sm:py-2.5 flex items-center justify-between gap-2 text-xs sticky top-0 z-50 border-b border-[#3F2553]/60 shadow-md">
+          <div className="flex items-center space-x-2 min-w-0">
+            <span className="w-2 h-2 rounded-full bg-[#DFFF5F] animate-pulse flex-shrink-0" />
+            <span className="font-semibold text-[#DFFF5F] truncate">Visualização do Convidado</span>
+            <span className="hidden sm:inline text-[#D2C4DC]/70">| Código: {guest.rsvpCode}</span>
+          </div>
+          <button
+            onClick={onBackToAdmin}
+            className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-lg bg-[#2E1B3C] hover:bg-[#3F2553] text-[#F7F1E5] font-semibold text-xs transition-colors border border-[#3F2553] cursor-pointer flex-shrink-0"
+          >
+            <ArrowLeft className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Voltar ao Painel</span>
+            <span className="sm:hidden">Voltar</span>
+          </button>
         </div>
-        <button
-          onClick={onBackToAdmin}
-          className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-lg bg-[#2E1B3C] hover:bg-[#3F2553] text-[#F7F1E5] font-semibold text-xs transition-colors border border-[#3F2553] cursor-pointer flex-shrink-0"
-        >
-          <ArrowLeft className="w-3.5 h-3.5" />
-          <span className="hidden sm:inline">Voltar ao Painel</span>
-          <span className="sm:hidden">Voltar</span>
-        </button>
-      </div>
+      )}
 
       <div className="max-w-xl mx-auto px-3.5 sm:px-4 pt-4 sm:pt-8 space-y-5 sm:space-y-6">
         {/* Rafluo Header Badge */}

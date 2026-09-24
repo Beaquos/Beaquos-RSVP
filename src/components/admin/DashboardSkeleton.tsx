@@ -171,11 +171,11 @@ export const DashboardSkeleton: React.FC<DashboardSkeletonProps> = ({
               </div>
 
               {/* Banner Actions */}
-              <div className="flex flex-wrap items-center gap-2.5">
+              <div className="flex flex-wrap items-center gap-2.5 w-full sm:w-auto">
                 <button
                   id="btn-edit-event-banner"
                   onClick={onEditEvent}
-                  className="px-4 py-2.5 rounded-xl bg-white hover:bg-[#F7F1E5] text-[#24152F] text-xs font-bold shadow-sm transition-all active:scale-95 cursor-pointer flex items-center gap-2"
+                  className="flex-1 sm:flex-initial justify-center px-4 py-2.5 rounded-xl bg-white hover:bg-[#F7F1E5] text-[#24152F] text-xs font-bold shadow-sm transition-all active:scale-95 cursor-pointer flex items-center gap-2"
                   title="Editar dados e configurações do evento"
                 >
                   <Edit3 className="w-3.5 h-3.5 text-[#24152F]" />
@@ -184,11 +184,11 @@ export const DashboardSkeleton: React.FC<DashboardSkeletonProps> = ({
                 <button
                   id="btn-edit-form-banner"
                   onClick={() => onNavigate('form-builder')}
-                  className="px-4 py-2.5 rounded-xl bg-[#2E1B3C] text-[#F7F1E5] border border-[#3F2553] hover:border-[#DFFF5F]/50 text-xs font-bold transition-all flex items-center gap-2 active:scale-95 cursor-pointer shadow-sm"
+                  className="flex-1 sm:flex-initial justify-center px-4 py-2.5 rounded-xl bg-[#2E1B3C] text-[#F7F1E5] border border-[#3F2553] hover:border-[#DFFF5F]/50 text-xs font-bold transition-all flex items-center gap-2 active:scale-95 cursor-pointer shadow-sm"
                   title="Acessar e configurar o formulário de confirmação de presença"
                 >
                   <FileText className="w-3.5 h-3.5 text-[#DFFF5F]" />
-                  <span>Formulário de Presença</span>
+                  <span>Formulário</span>
                 </button>
               </div>
             </div>
@@ -445,16 +445,16 @@ export const DashboardSkeleton: React.FC<DashboardSkeletonProps> = ({
                       </p>
                     </div>
 
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
                       <button
                         onClick={onEditEvent}
-                        className="px-3.5 py-1.5 text-xs font-semibold text-[#24152F] bg-white border border-[#24152F]/20 rounded-lg hover:bg-[#F7F1E5] cursor-pointer"
+                        className="flex-1 sm:flex-initial text-center px-3.5 py-1.5 text-xs font-semibold text-[#24152F] bg-white border border-[#24152F]/20 rounded-lg hover:bg-[#F7F1E5] cursor-pointer"
                       >
                         Editar Informações
                       </button>
                       <button
                         onClick={() => onNavigate('form-builder')}
-                        className="px-3.5 py-1.5 text-xs font-semibold bg-[#24152F] text-[#F7F1E5] rounded-lg hover:bg-[#180D20] cursor-pointer border border-[#3F2553]"
+                        className="flex-1 sm:flex-initial text-center px-3.5 py-1.5 text-xs font-semibold bg-[#24152F] text-[#F7F1E5] rounded-lg hover:bg-[#180D20] cursor-pointer border border-[#3F2553]"
                       >
                         Editar Perguntas
                       </button>
@@ -462,23 +462,48 @@ export const DashboardSkeleton: React.FC<DashboardSkeletonProps> = ({
                   </div>
 
                   {/* Public RSVP Link Box */}
-                  <div className="p-3 rounded-xl bg-white border border-[#24152F]/10 flex items-center justify-between gap-3 text-xs">
+                  <div className="p-3 rounded-xl bg-white border border-[#24152F]/10 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 text-xs">
                     <div className="flex items-center gap-2 min-w-0">
                       <Globe className="w-3.5 h-3.5 text-[#24152F]/70 flex-shrink-0" />
                       <span className="font-mono text-[11px] text-[#24152F]/70 truncate">
                         {getEventRsvpUrl(event.id, event.slug)}
                       </span>
                     </div>
-                    {onExitToMaster && (
+                    <div className="flex items-center gap-2 flex-shrink-0">
                       <button
                         type="button"
-                        onClick={onExitToMaster}
-                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#24152F]/15 text-[#24152F] hover:bg-[#F7F1E5] text-xs font-semibold cursor-pointer flex-shrink-0"
+                        onClick={handleCopyEvent}
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#24152F] hover:bg-[#180D20] text-[#F7F1E5] text-xs font-semibold cursor-pointer border border-[#3F2553] transition-colors"
+                        title="Copiar Link RSVP"
                       >
-                        <LayoutGrid className="w-3.5 h-3.5 text-[#24152F]" />
-                        <span>Ver Todos os Eventos</span>
+                        {hasCopiedLink || localEventCopied ? (
+                          <Check className="w-3.5 h-3.5 text-[#DFFF5F]" />
+                        ) : (
+                          <Copy className="w-3.5 h-3.5 text-[#DFFF5F]" />
+                        )}
+                        <span>{hasCopiedLink || localEventCopied ? 'Copiado!' : 'Copiar Link'}</span>
                       </button>
-                    )}
+                      <a
+                        href={getEventRsvpUrl(event.id, event.slug)}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#24152F]/20 text-[#24152F] hover:bg-[#F7F1E5] text-xs font-semibold cursor-pointer transition-colors"
+                        title="Abrir página pública do RSVP"
+                      >
+                        <ExternalLink className="w-3.5 h-3.5 text-[#24152F]" />
+                        <span>Abrir Link</span>
+                      </a>
+                      {onExitToMaster && (
+                        <button
+                          type="button"
+                          onClick={onExitToMaster}
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#24152F]/15 text-[#24152F] hover:bg-[#F7F1E5] text-xs font-semibold cursor-pointer"
+                        >
+                          <LayoutGrid className="w-3.5 h-3.5 text-[#24152F]" />
+                          <span>Ver Todos</span>
+                        </button>
+                      )}
+                    </div>
                   </div>
 
                   <div className="pt-3 border-t border-[#24152F]/10 grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs text-[#24152F]/70">
@@ -515,7 +540,7 @@ export const DashboardSkeleton: React.FC<DashboardSkeletonProps> = ({
                   <button
                     id="btn-add-question-tab"
                     onClick={onAddQuestion}
-                    className="px-3.5 py-2 bg-[#24152F] text-[#F7F1E5] text-xs font-semibold rounded-lg hover:bg-[#180D20] transition-colors shadow-sm flex items-center gap-1.5 border border-[#3F2553]"
+                    className="w-full sm:w-auto justify-center px-3.5 py-2 bg-[#24152F] text-[#F7F1E5] text-xs font-semibold rounded-xl sm:rounded-lg hover:bg-[#180D20] transition-colors shadow-sm flex items-center gap-1.5 border border-[#3F2553]"
                   >
                     + Adicionar Pergunta
                   </button>
@@ -608,7 +633,7 @@ export const DashboardSkeleton: React.FC<DashboardSkeletonProps> = ({
                     </h3>
                   </div>
 
-                  <div className="flex flex-wrap items-center gap-2">
+                  <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
                     <button
                       id="btn-export-guest-xlsx"
                       onClick={() => {
@@ -626,10 +651,10 @@ export const DashboardSkeleton: React.FC<DashboardSkeletonProps> = ({
                           if (onShowToast) onShowToast('Erro ao exportar planilha XLSX.');
                         }
                       }}
-                      className="flex items-center gap-1.5 px-3 py-1.5 border border-emerald-800 text-xs font-semibold rounded-lg bg-emerald-700 hover:bg-emerald-800 cursor-pointer text-white shadow-2xs"
+                      className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-3 py-2 sm:py-1.5 border border-emerald-800 text-xs font-semibold rounded-xl sm:rounded-lg bg-emerald-700 hover:bg-emerald-800 cursor-pointer text-white shadow-2xs"
                       title="Exportar dados para planilha Excel (.xlsx)"
                     >
-                      <FileSpreadsheet className="w-3.5 h-3.5 text-[#DFFF5F]" /> Exportar XLSX
+                      <FileSpreadsheet className="w-3.5 h-3.5 text-[#DFFF5F]" /> <span className="truncate">Exportar XLSX</span>
                     </button>
                     <button
                       id="btn-export-guest-pdf"
@@ -648,22 +673,22 @@ export const DashboardSkeleton: React.FC<DashboardSkeletonProps> = ({
                           if (onShowToast) onShowToast('Erro ao exportar documento PDF.');
                         }
                       }}
-                      className="flex items-center gap-1.5 px-3 py-1.5 border border-[#3F2553] text-xs font-semibold rounded-lg bg-[#24152F] hover:bg-[#180D20] cursor-pointer text-[#F7F1E5] shadow-2xs"
+                      className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-3 py-2 sm:py-1.5 border border-[#3F2553] text-xs font-semibold rounded-xl sm:rounded-lg bg-[#24152F] hover:bg-[#180D20] cursor-pointer text-[#F7F1E5] shadow-2xs"
                       title="Exportar documento oficial em PDF formatado"
                     >
-                      <FileText className="w-3.5 h-3.5 text-[#DFFF5F]" /> Exportar PDF
+                      <FileText className="w-3.5 h-3.5 text-[#DFFF5F]" /> <span className="truncate">Exportar PDF</span>
                     </button>
                     <button
                       id="btn-import-csv"
                       onClick={onImportCsv}
-                      className="flex items-center gap-1.5 px-3 py-1.5 border border-[#24152F]/20 bg-[#F7F1E5] text-[#24152F] text-xs font-semibold rounded-lg hover:bg-[#EDE4D3] cursor-pointer"
+                      className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-3 py-2 sm:py-1.5 border border-[#24152F]/20 bg-[#F7F1E5] text-[#24152F] text-xs font-semibold rounded-xl sm:rounded-lg hover:bg-[#EDE4D3] cursor-pointer"
                     >
-                      <Upload className="w-3.5 h-3.5" /> Importar CSV
+                      <Upload className="w-3.5 h-3.5" /> <span className="truncate">Importar CSV</span>
                     </button>
                     <button
                       id="btn-add-guest"
                       onClick={onAddGuest}
-                      className="flex items-center gap-1.5 px-3.5 py-1.5 bg-[#24152F] hover:bg-[#180D20] text-[#F7F1E5] text-xs font-semibold rounded-lg cursor-pointer border border-[#3F2553]"
+                      className="w-full sm:w-auto flex items-center justify-center gap-1.5 px-3.5 py-2 sm:py-1.5 bg-[#24152F] hover:bg-[#180D20] text-[#F7F1E5] text-xs font-semibold rounded-xl sm:rounded-lg cursor-pointer border border-[#3F2553]"
                     >
                       + Cadastrar Convidado
                     </button>
@@ -827,7 +852,7 @@ export const DashboardSkeleton: React.FC<DashboardSkeletonProps> = ({
             {/* SECTION: MANAGERS */}
             {currentSection === 'managers' && (
               <div className="space-y-4">
-                <div className="flex items-center justify-between pb-3 border-b border-[#24152F]/10">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[#24152F]/10">
                   <div>
                     <h3 className="text-base font-bold text-[#24152F]">
                       Responsáveis
@@ -836,7 +861,7 @@ export const DashboardSkeleton: React.FC<DashboardSkeletonProps> = ({
                   <button
                     id="btn-add-manager"
                     onClick={onAddManager}
-                    className="px-3.5 py-2 bg-[#24152F] hover:bg-[#180D20] text-[#F7F1E5] text-xs font-semibold rounded-lg transition-colors shadow-sm border border-[#3F2553]"
+                    className="w-full sm:w-auto text-center justify-center px-3.5 py-2 bg-[#24152F] hover:bg-[#180D20] text-[#F7F1E5] text-xs font-semibold rounded-xl sm:rounded-lg transition-colors shadow-sm border border-[#3F2553]"
                   >
                     + Adicionar Responsável
                   </button>
@@ -889,7 +914,7 @@ export const DashboardSkeleton: React.FC<DashboardSkeletonProps> = ({
                     <h3 className="text-base font-bold text-[#24152F]">Relatórios</h3>
                   </div>
 
-                  <div className="flex flex-wrap items-center gap-2">
+                  <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
                     <button
                       type="button"
                       id="btn-event-export-xlsx"
@@ -908,10 +933,10 @@ export const DashboardSkeleton: React.FC<DashboardSkeletonProps> = ({
                           if (onShowToast) onShowToast('Erro ao exportar XLSX.');
                         }
                       }}
-                      className="flex items-center gap-1.5 px-3.5 py-2 bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-semibold rounded-lg transition-colors shadow-2xs border border-emerald-900 cursor-pointer"
+                      className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-3.5 py-2 bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-semibold rounded-xl sm:rounded-lg transition-colors shadow-2xs border border-emerald-900 cursor-pointer"
                       title="Exportar planilha Excel (.xlsx)"
                     >
-                      <FileSpreadsheet className="w-3.5 h-3.5 text-[#DFFF5F]" /> Exportar XLSX
+                      <FileSpreadsheet className="w-3.5 h-3.5 text-[#DFFF5F]" /> <span>Exportar XLSX</span>
                     </button>
 
                     <button
@@ -932,10 +957,10 @@ export const DashboardSkeleton: React.FC<DashboardSkeletonProps> = ({
                           if (onShowToast) onShowToast('Erro ao exportar PDF.');
                         }
                       }}
-                      className="flex items-center gap-1.5 px-3.5 py-2 bg-[#24152F] hover:bg-[#180D20] text-[#F7F1E5] text-xs font-semibold rounded-lg transition-colors shadow-2xs border border-[#3F2553] cursor-pointer"
+                      className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-3.5 py-2 bg-[#24152F] hover:bg-[#180D20] text-[#F7F1E5] text-xs font-semibold rounded-xl sm:rounded-lg transition-colors shadow-2xs border border-[#3F2553] cursor-pointer"
                       title="Exportar documento oficial em PDF formatado"
                     >
-                      <FileText className="w-3.5 h-3.5 text-[#DFFF5F]" /> Exportar PDF
+                      <FileText className="w-3.5 h-3.5 text-[#DFFF5F]" /> <span>Exportar PDF</span>
                     </button>
                   </div>
                 </div>

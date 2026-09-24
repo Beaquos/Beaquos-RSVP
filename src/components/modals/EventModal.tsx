@@ -84,10 +84,51 @@ export const EventModal: React.FC<EventModalProps> = ({
                 type="text"
                 required
                 value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                onChange={(e) => {
+                  const newName = e.target.value;
+                  // If slug was empty or auto-generated, keep slug synced
+                  const autoSlug = newName
+                    .toLowerCase()
+                    .normalize('NFD')
+                    .replace(/[\u0300-\u036f]/g, '')
+                    .replace(/[^a-z0-9]+/g, '-')
+                    .replace(/^-+|-+$/g, '');
+                  setFormData((prev) => ({
+                    ...prev,
+                    name: newName,
+                    slug: prev.slug ? prev.slug : autoSlug,
+                  }));
+                }}
                 className="w-full px-3 py-2 rounded-lg border border-[#24152F]/20 bg-[#FAF6EE] focus:outline-none focus:ring-1 focus:ring-[#24152F]"
                 placeholder="Ex: Casamento Marina & Lucas"
               />
+            </div>
+
+            <div className="sm:col-span-2">
+              <label className="block font-semibold mb-1 text-[#24152F]">
+                Slug da URL Pública (Link RSVP)
+              </label>
+              <div className="flex items-center rounded-lg border border-[#24152F]/20 bg-[#FAF6EE] px-3 py-2 focus-within:ring-1 focus-within:ring-[#24152F]">
+                <span className="text-[11px] text-[#24152F]/50 select-none mr-1">/rsvp/evento/</span>
+                <input
+                  type="text"
+                  value={formData.slug || ''}
+                  onChange={(e) => {
+                    const cleanSlug = e.target.value
+                      .toLowerCase()
+                      .normalize('NFD')
+                      .replace(/[\u0300-\u036f]/g, '')
+                      .replace(/[^a-z0-9-]/g, '')
+                      .replace(/--+/g, '-');
+                    setFormData({ ...formData, slug: cleanSlug });
+                  }}
+                  placeholder="ex: marina-e-lucas"
+                  className="w-full bg-transparent text-xs text-[#24152F] font-semibold focus:outline-none"
+                />
+              </div>
+              <p className="text-[10px] text-[#24152F]/60 mt-1">
+                Identificador exclusivo do evento para o link público de confirmação.
+              </p>
             </div>
 
             <div>
